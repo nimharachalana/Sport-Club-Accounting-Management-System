@@ -60,7 +60,7 @@ export function AppSidebar({
     { label: t("dashboard"), href: "/", icon: LayoutDashboard },
     { label: t("transactions"), href: "/transactions", icon: Receipt },
     { label: t("people"), href: "/people", icon: Users },
-    { label: t("reports"), href: "/reports", icon: BarChart3 },
+    { label: t("reports"), href: "/reports/income-expenditure", icon: BarChart3 },
     ...(isAdmin ? [{ label: t("settings"), href: "/settings", icon: Settings }] : []),
   ]
 
@@ -215,7 +215,7 @@ export function AppSidebar({
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="md:hidden sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/60">
+      <div className="md:hidden sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/60 print:hidden">
         <a href="/" className="flex items-center gap-2.5 font-bold">
           <div className="h-7 w-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center">
             <Trophy className="h-4 w-4" />
@@ -268,7 +268,7 @@ export function AppSidebar({
       )}
 
       {/* Desktop Fixed Left Sidebar */}
-      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r bg-card/60 backdrop-blur-md p-4 z-30">
+      <aside className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 border-r bg-card/60 backdrop-blur-md p-4 z-30 print:hidden">
         {sidebarContent}
       </aside>
     </>

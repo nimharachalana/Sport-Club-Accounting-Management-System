@@ -55,7 +55,7 @@ export function AppHeader({ user, profile, isAdmin }: AppHeaderProps) {
   const displayName = profile?.full_name || user.email?.split("@")[0] || "User"
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 print:hidden">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
         {/* Brand */}
         <div className="flex items-center gap-6">
