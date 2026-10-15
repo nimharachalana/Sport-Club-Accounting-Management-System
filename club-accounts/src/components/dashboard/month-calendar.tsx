@@ -215,7 +215,7 @@ export function MonthCalendar({
           <div className="flex items-center justify-between text-xs">
             <span className="font-semibold text-foreground flex items-center gap-1.5">
               <span>{t("eventsOnDay")}:</span>
-              <span className="font-mono text-muted-foreground">{selectedDateStr}</span>
+              <span className="text-muted-foreground">{selectedDateStr}</span>
             </span>
             {selectedDayData && (
               <span className="text-[11px] text-muted-foreground">
@@ -266,7 +266,7 @@ export function MonthCalendar({
 
                     <div className="text-right shrink-0">
                       <div
-                        className={`font-semibold font-mono ${
+                        className={`font-semibold tabular-nums ${
                           isIncome
                             ? "text-emerald-600 dark:text-emerald-400"
                             : "text-foreground"

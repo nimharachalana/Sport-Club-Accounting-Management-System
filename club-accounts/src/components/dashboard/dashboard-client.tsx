@@ -69,11 +69,11 @@ export function DashboardClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono text-foreground">
-              {currency} {(closingCash / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            <div className="text-2xl font-bold tabular-nums text-foreground">
+              {fmt(closingCash, currency)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              {t("openingCash")}: {currency} {(openingCash / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              {t("openingCash")}: {fmt(openingCash, currency)}
             </p>
           </CardContent>
         </Card>
@@ -89,11 +89,11 @@ export function DashboardClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono text-foreground">
-              {currency} {(closingBank / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            <div className="text-2xl font-bold tabular-nums text-foreground">
+              {fmt(closingBank, currency)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              {t("openingBank")}: {currency} {(openingBank / 100).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+              {t("openingBank")}: {fmt(openingBank, currency)}
             </p>
           </CardContent>
         </Card>
@@ -109,8 +109,8 @@ export function DashboardClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono text-emerald-600 dark:text-emerald-400">
-              {fmt(totalIncome)}
+            <div className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+              {fmt(totalIncome, currency)}
             </div>
             <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/70 mt-1">
               {t("currentPeriodIncome")}
@@ -129,8 +129,8 @@ export function DashboardClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold font-mono text-rose-600 dark:text-rose-400">
-              {fmt(totalExpense)}
+            <div className="text-2xl font-bold tabular-nums text-rose-600 dark:text-rose-400">
+              {fmt(totalExpense, currency)}
             </div>
             <p className="text-[11px] text-rose-700/70 dark:text-rose-300/70 mt-1">
               {t("currentPeriodExpenses")}

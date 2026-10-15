@@ -182,7 +182,7 @@ export function TransactionDetailDialog({
               <FileText className="h-4 w-4" />
               <span>{t("billNo")}</span>
             </div>
-            <span className="font-medium font-mono">
+            <span className="font-medium">
               {transaction.bill_no || "—"}
             </span>
           </div>

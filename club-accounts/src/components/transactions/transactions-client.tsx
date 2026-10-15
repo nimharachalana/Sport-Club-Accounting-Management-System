@@ -438,7 +438,7 @@ export function TransactionsClient({
                       <td className="py-3 px-4 max-w-[200px] truncate">
                         <span className="font-medium text-xs">{tx.party}</span>
                         {tx.bill_no && (
-                          <span className="ml-1.5 text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                          <span className="ml-1.5 text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                             #{tx.bill_no}
                           </span>
                         )}
