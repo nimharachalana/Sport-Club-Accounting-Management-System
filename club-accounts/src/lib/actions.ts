@@ -41,6 +41,8 @@ export async function createTransaction(values: TransactionInput): Promise<strin
 
   revalidatePath('/')
   revalidatePath('/transactions')
+  revalidatePath('/reports')
+  revalidatePath('/reports/income-expenditure')
   return data.id
 }
 
@@ -104,6 +106,8 @@ export async function updateTransaction(
 
   revalidatePath('/transactions')
   revalidatePath('/')
+  revalidatePath('/reports')
+  revalidatePath('/reports/income-expenditure')
 }
 
 /**
@@ -147,6 +151,8 @@ export async function deleteTransaction(id: string): Promise<void> {
 
   revalidatePath('/transactions')
   revalidatePath('/')
+  revalidatePath('/reports')
+  revalidatePath('/reports/income-expenditure')
 }
 
 /**
