@@ -1,20 +1,24 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useAuth } from "@/components/auth-provider"
 
 interface ReportSignaturesProps {
   locale: string
 }
 
 export function ReportSignatures({ locale }: ReportSignaturesProps) {
+  const { isAdmin } = useAuth()
+  const [mounted, setMounted] = useState(false)
   const isSi = locale === "si"
 
-  // Allow manual entry with localStorage persistence
+  // Allow manual entry with localStorage persistence (Admin only)
   const [seniorTreasurer, setSeniorTreasurer] = useState("")
   const [juniorTreasurer, setJuniorTreasurer] = useState("")
   const [dean, setDean] = useState("Prof. Subash Jayasinghe")
 
   useEffect(() => {
+    setMounted(true)
     try {
       const savedSenior = localStorage.getItem("report_senior_treasurer")
       const savedJunior = localStorage.getItem("report_junior_treasurer")
@@ -26,6 +30,8 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
       // Ignore localStorage errors
     }
   }, [])
+
+  const canEdit = mounted && isAdmin
 
   const handleSeniorChange = (val: string) => {
     setSeniorTreasurer(val)
@@ -61,13 +67,19 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
           <div className="space-y-1">
             {/* Screen Input / Print Text */}
             <div className="print:hidden">
-              <input
-                type="text"
-                placeholder={isSi ? "නම ඇතුළත් කරන්න..." : "Type Senior Treasurer name..."}
-                value={seniorTreasurer}
-                onChange={(e) => handleSeniorChange(e.target.value)}
-                className="w-full max-w-xs text-sm border-b border-input focus:border-foreground bg-transparent py-1 text-foreground placeholder:text-muted-foreground/60 outline-hidden font-medium"
-              />
+              {canEdit ? (
+                <input
+                  type="text"
+                  placeholder={isSi ? "නම ඇතුළත් කරන්න..." : "Type Senior Treasurer name..."}
+                  value={seniorTreasurer}
+                  onChange={(e) => handleSeniorChange(e.target.value)}
+                  className="w-full max-w-xs text-sm border-b border-input focus:border-foreground bg-transparent py-1 text-foreground placeholder:text-muted-foreground/60 outline-hidden font-medium"
+                />
+              ) : (
+                <div className="text-sm font-semibold text-foreground py-1">
+                  {seniorTreasurer ? seniorTreasurer : "...................................................."}
+                </div>
+              )}
             </div>
             {/* Print Output */}
             <div className="hidden print:block text-sm font-semibold text-foreground">
@@ -95,13 +107,19 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
           <div className="space-y-1 sm:w-full sm:flex sm:flex-col sm:items-end">
             {/* Screen Input / Print Text */}
             <div className="print:hidden w-full sm:flex sm:justify-end">
-              <input
-                type="text"
-                placeholder={isSi ? "පීඨාධිපති නම..." : "Type Dean name..."}
-                value={dean}
-                onChange={(e) => handleDeanChange(e.target.value)}
-                className="w-full max-w-xs text-sm border-b border-input focus:border-foreground bg-transparent py-1 text-foreground placeholder:text-muted-foreground/60 outline-hidden font-medium sm:text-right"
-              />
+              {canEdit ? (
+                <input
+                  type="text"
+                  placeholder={isSi ? "පීඨාධිපති නම..." : "Type Dean name..."}
+                  value={dean}
+                  onChange={(e) => handleDeanChange(e.target.value)}
+                  className="w-full max-w-xs text-sm border-b border-input focus:border-foreground bg-transparent py-1 text-foreground placeholder:text-muted-foreground/60 outline-hidden font-medium sm:text-right"
+                />
+              ) : (
+                <div className="text-sm font-semibold text-foreground py-1 sm:text-right">
+                  {dean ? dean : "Prof. Subash Jayasinghe"}
+                </div>
+              )}
             </div>
             {/* Print Output */}
             <div className="hidden print:block text-sm font-semibold text-foreground">
@@ -130,13 +148,19 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
         <div className="space-y-1">
           {/* Screen Input / Print Text */}
           <div className="print:hidden">
-            <input
-              type="text"
-              placeholder={isSi ? "නම ඇතුළත් කරන්න..." : "Type Junior Treasurer name..."}
-              value={juniorTreasurer}
-              onChange={(e) => handleJuniorChange(e.target.value)}
-              className="w-full max-w-xs text-sm border-b border-input focus:border-foreground bg-transparent py-1 text-foreground placeholder:text-muted-foreground/60 outline-hidden font-medium"
-            />
+            {canEdit ? (
+              <input
+                type="text"
+                placeholder={isSi ? "නම ඇතුළත් කරන්න..." : "Type Junior Treasurer name..."}
+                value={juniorTreasurer}
+                onChange={(e) => handleJuniorChange(e.target.value)}
+                className="w-full max-w-xs text-sm border-b border-input focus:border-foreground bg-transparent py-1 text-foreground placeholder:text-muted-foreground/60 outline-hidden font-medium"
+              />
+            ) : (
+              <div className="text-sm font-semibold text-foreground py-1">
+                {juniorTreasurer ? juniorTreasurer : "...................................................."}
+              </div>
+            )}
           </div>
           {/* Print Output */}
           <div className="hidden print:block text-sm font-semibold text-foreground">
