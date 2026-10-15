@@ -326,3 +326,150 @@ export async function removeViewer(userId: string): Promise<void> {
   revalidatePath('/people')
 }
 
+/**
+ * Updates club settings (club name, currency, opening balances)
+ */
+export async function updateSettings(values: {
+  club_name: string
+  currency: string
+  opening_cash?: number
+  opening_bank?: number
+}): Promise<void> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error('Not signed in')
+  }
+
+  const { data: me } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (me?.role !== 'admin') {
+    throw new Error('Admins only')
+  }
+
+  const { error } = await supabase
+    .from('settings')
+    .update({
+      club_name: values.club_name.trim(),
+      currency: values.currency.trim() || 'Rs.',
+      opening_cash: Number(values.opening_cash || 0),
+      opening_bank: Number(values.opening_bank || 0),
+    })
+    .eq('id', 1)
+
+  if (error) {
+    console.error('Error updating settings:', error)
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/settings')
+  revalidatePath('/')
+  revalidatePath('/reports')
+  revalidatePath('/reports/income-expenditure')
+}
+
+/**
+ * Updates an existing category's English and Sinhala names
+ */
+export async function updateCategory(
+  id: string,
+  values: { name_en: string; name_si?: string }
+): Promise<void> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error('Not signed in')
+  }
+
+  const { data: me } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (me?.role !== 'admin') {
+    throw new Error('Admins only')
+  }
+
+  const { error } = await supabase
+    .from('categories')
+    .update({
+      name_en: values.name_en.trim(),
+      name_si: values.name_si?.trim() || values.name_en.trim(),
+    })
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error updating category:', error)
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/settings')
+  revalidatePath('/transactions')
+  revalidatePath('/reports')
+  revalidatePath('/reports/income-expenditure')
+}
+
+/**
+ * Safely deletes an unused category
+ */
+export async function deleteCategory(id: string): Promise<void> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error('Not signed in')
+  }
+
+  const { data: me } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (me?.role !== 'admin') {
+    throw new Error('Admins only')
+  }
+
+  // Check if any transactions are using this category
+  const { count, error: countErr } = await supabase
+    .from('transactions')
+    .select('id', { count: 'exact', head: true })
+    .eq('category_id', id)
+
+  if (countErr) {
+    throw new Error(countErr.message)
+  }
+
+  if (count && count > 0) {
+    throw new Error(`Cannot delete this category: ${count} transaction(s) are currently linked to it.`)
+  }
+
+  const { error } = await supabase
+    .from('categories')
+    .delete()
+    .eq('id', id)
+
+  if (error) {
+    console.error('Error deleting category:', error)
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/settings')
+  revalidatePath('/transactions')
+  revalidatePath('/reports')
+  revalidatePath('/reports/income-expenditure')
+}
+

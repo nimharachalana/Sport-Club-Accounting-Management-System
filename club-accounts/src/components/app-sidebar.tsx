@@ -61,7 +61,7 @@ export function AppSidebar({
     { label: t("transactions"), href: "/transactions", icon: Receipt },
     { label: t("people"), href: "/people", icon: Users },
     { label: t("reports"), href: "/reports/income-expenditure", icon: BarChart3 },
-    ...(isAdmin ? [{ label: t("settings"), href: "/settings", icon: Settings }] : []),
+    { label: t("settings"), href: "/settings", icon: Settings },
   ]
 
   const displayName = profile?.full_name || user.email?.split("@")[0] || "User"
