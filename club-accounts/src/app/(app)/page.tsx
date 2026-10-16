@@ -68,10 +68,9 @@ export default async function DashboardPage() {
     photos: t.photos || [],
   }))
 
-  // 5. Calculate Financial Balances
-  // Note: opening cash & bank in settings table are stored in standard rupees, convert to cents
-  const openingCash = Math.round((settings?.opening_cash || 0) * 100)
-  const openingBank = Math.round((settings?.opening_bank || 0) * 100)
+  // 5. Calculate Financial Balances (standard currency)
+  const openingCash = Number(settings?.opening_cash || 0)
+  const openingBank = Number(settings?.opening_bank || 0)
 
   let totalIncome = 0
   let totalExpense = 0

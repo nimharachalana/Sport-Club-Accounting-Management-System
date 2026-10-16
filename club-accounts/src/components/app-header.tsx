@@ -3,9 +3,9 @@
 import { usePathname, useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
 import { createClient } from "@/lib/supabase/client"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
-  Trophy,
   LayoutDashboard,
   Receipt,
   Users,
@@ -55,13 +55,20 @@ export function AppHeader({ user, profile, isAdmin }: AppHeaderProps) {
   const displayName = profile?.full_name || user.email?.split("@")[0] || "User"
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 print:hidden">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6">
         {/* Brand */}
         <div className="flex items-center gap-6">
           <a href="/" className="flex items-center gap-2.5 font-bold tracking-tight">
-            <div className="h-9 w-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
-              <Trophy className="h-5 w-5" />
+            <div className="relative h-9 w-9 rounded-xl overflow-hidden shadow-xs shrink-0 border border-emerald-500/25 bg-slate-950">
+              <Image
+                src="/fot-logo.jpg"
+                alt="Faculty of Technology Logo"
+                fill
+                sizes="36px"
+                className="object-cover"
+                priority
+              />
             </div>
             <div className="flex flex-col">
               <span className="text-base font-semibold leading-tight">{t("brand")}</span>

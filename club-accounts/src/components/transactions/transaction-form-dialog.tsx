@@ -96,7 +96,7 @@ export function TransactionFormDialog({
         reset({
           type: transactionToEdit.type,
           tx_date: transactionToEdit.tx_date,
-          amount: transactionToEdit.amount / 100,
+          amount: Number(transactionToEdit.amount),
           category_id: transactionToEdit.category_id,
           party: transactionToEdit.party,
           bill_no: transactionToEdit.bill_no || "",
@@ -125,7 +125,10 @@ export function TransactionFormDialog({
       setNewCatNameEn("")
       setNewCatNameSi("")
     }
-  }, [open, transactionToEdit, reset, todayStr, localCategories])
+    // Only re-initialize when the modal opens or transactionToEdit changes.
+    // Do NOT include localCategories so adding a category never wipes user-entered data!
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, transactionToEdit])
 
   const handleTypeChange = (newType: "income" | "expense") => {
     setValue("type", newType)
@@ -182,7 +185,7 @@ export function TransactionFormDialog({
     const supabase = createClient()
 
     try {
-      const amountInCents = toCents(values.amount)
+      const numericAmount = Number(values.amount)
       let txId: string
 
       if (isEditing && transactionToEdit) {
@@ -192,7 +195,7 @@ export function TransactionFormDialog({
           {
             type: values.type,
             tx_date: values.tx_date,
-            amount: amountInCents,
+            amount: numericAmount,
             category_id: values.category_id,
             party: values.party,
             bill_no: values.bill_no || null,
@@ -207,7 +210,7 @@ export function TransactionFormDialog({
         txId = await createTransaction({
           type: values.type,
           tx_date: values.tx_date,
-          amount: amountInCents,
+          amount: numericAmount,
           category_id: values.category_id,
           party: values.party,
           bill_no: values.bill_no || null,
@@ -348,12 +351,12 @@ export function TransactionFormDialog({
                   }}
                   {...register("amount", { valueAsNumber: true })}
                   disabled={isSubmitting}
-                  className="pl-9 font-mono text-base font-bold tracking-tight h-9"
+                  className="pl-9 text-base font-bold tracking-tight h-9"
                 />
               </div>
               {currentAmount && !isNaN(Number(currentAmount)) && Number(currentAmount) > 0 ? (
-                <p className="text-[11px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
-                  {t("amountFormatted")}: {fmt(Math.round(Number(currentAmount) * 100))}
+                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                  {t("amountFormatted")}: {fmt(Number(currentAmount))}
                 </p>
               ) : errors.amount ? (
                 <p className="text-xs text-destructive">{errors.amount.message}</p>
@@ -463,12 +466,17 @@ export function TransactionFormDialog({
             {errors.category_id && <p className="text-xs text-destructive">{errors.category_id.message}</p>}
           </div>
 
-          {/* Party / Payee */}
+          {/* Event / Section Heading or Party */}
           <div className="space-y-1.5">
-            <Label htmlFor="party">{t("party")}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="party">{t("party")}</Label>
+              <span className="text-[11px] text-muted-foreground">
+                Report Section Heading (e.g. Inter Batch Meet)
+              </span>
+            </div>
             <Input
               id="party"
-              placeholder={t("partyPlaceholder")}
+              placeholder="e.g. Inter Batch Meet ( 21/02/2026 ), Film Show, or Team name"
               {...register("party")}
               disabled={isSubmitting}
             />
@@ -519,13 +527,18 @@ export function TransactionFormDialog({
             </div>
           </div>
 
-          {/* Note / Description */}
+          {/* Note / Itemized Breakdown */}
           <div className="space-y-1.5">
-            <Label htmlFor="note">{t("notes")}</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="note">{t("notes")}</Label>
+              <span className="text-[11px] text-muted-foreground">
+                Item breakdown (one per line for bullets)
+              </span>
+            </div>
             <Textarea
               id="note"
-              rows={2}
-              placeholder={t("notesPlaceholder")}
+              rows={3}
+              placeholder="e.g.&#10;• One Ticket Price- Rs. 100 (Sold-500 Tickets)&#10;• Total cost for Bite"
               {...register("note")}
               disabled={isSubmitting}
             />

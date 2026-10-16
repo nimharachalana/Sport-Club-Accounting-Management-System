@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { redirect } from "next/navigation"
 import { createClient } from "@/lib/supabase/server"
 import { AuthProvider } from "@/components/auth-provider"
@@ -46,7 +47,9 @@ export default async function AppLayout({
         isAdmin={isAdmin}
         categories={categories}
       >
-        {children}
+        <Suspense fallback={<div className="p-8 text-sm text-neutral-400">Loading...</div>}>
+          {children}
+        </Suspense>
       </AppShell>
     </AuthProvider>
   )

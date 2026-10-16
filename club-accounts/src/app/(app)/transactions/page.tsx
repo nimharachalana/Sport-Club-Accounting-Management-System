@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server"
 import { TransactionsClient } from "@/components/transactions/transactions-client"
 import type { Category, Transaction } from "@/components/transactions/types"
 
-
 export default async function TransactionsPage() {
   const supabase = await createClient()
 

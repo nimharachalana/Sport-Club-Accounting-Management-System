@@ -66,10 +66,8 @@ export function FinancialCharts({ transactions }: FinancialChartsProps) {
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([_, v]) => ({
         name: v.label,
-        incomeCents: v.income,
-        expenseCents: v.expense,
-        income: v.income / 100,
-        expense: v.expense / 100,
+        income: v.income,
+        expense: v.expense,
       }))
   }, [transactions])
 
@@ -93,8 +91,7 @@ export function FinancialCharts({ transactions }: FinancialChartsProps) {
     return Array.from(map.values())
       .map((item) => ({
         name: item.name,
-        value: item.total / 100,
-        cents: item.total,
+        value: item.total,
       }))
       .sort((a, b) => b.value - a.value)
   }, [transactions, locale])
@@ -155,8 +152,8 @@ export function FinancialCharts({ transactions }: FinancialChartsProps) {
                               >
                                 {entry.dataKey === "income" ? tTx("income") : tTx("expense")}:
                               </span>
-                              <span className="font-mono font-semibold">
-                                {fmt(entry.payload[entry.dataKey === "income" ? "incomeCents" : "expenseCents"])}
+                              <span className="font-semibold tabular-nums">
+                                {fmt(entry.value)}
                               </span>
                             </div>
                           ))}
@@ -227,8 +224,8 @@ export function FinancialCharts({ transactions }: FinancialChartsProps) {
                       return (
                         <div className="rounded-xl border bg-popover/95 backdrop-blur-md p-2.5 shadow-lg text-xs space-y-1">
                           <p className="font-semibold text-popover-foreground">{item.name}</p>
-                          <p className="font-mono font-bold text-rose-500">
-                            {fmt(item.payload.cents)}
+                          <p className="font-bold text-rose-500 tabular-nums">
+                            {fmt(item.payload.value)}
                           </p>
                         </div>
                       )

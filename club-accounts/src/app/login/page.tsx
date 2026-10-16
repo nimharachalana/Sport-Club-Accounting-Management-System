@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Trophy, Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, Languages } from "lucide-react"
+import Image from "next/image"
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, Languages } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
@@ -80,8 +81,15 @@ export default function LoginPage() {
 
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8 text-center space-y-2">
-          <div className="h-14 w-14 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shadow-lg shadow-emerald-600/25">
-            <Trophy className="h-7 w-7" />
+          <div className="relative h-20 w-20 rounded-2xl overflow-hidden shadow-xl shadow-emerald-950/25 border border-emerald-500/25 bg-slate-950">
+            <Image
+              src="/fot-logo.jpg"
+              alt="Faculty of Technology Logo"
+              fill
+              sizes="80px"
+              className="object-cover"
+              priority
+            />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">{t("brandTitle")}</h1>
