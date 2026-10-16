@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, Fragment } from "react"
 import { fmt } from "@/lib/money"
 import { useAuth } from "@/components/auth-provider"
 import { ReportSignatures } from "./report-signatures"
-import { Plus, Pencil, RotateCcw, Check, X, ArrowRightLeft, Trash2 } from "lucide-react"
+import { Plus, Pencil, Check, X, ArrowRightLeft, Trash2 } from "lucide-react"
 
 export interface ReportItem {
   id: string
@@ -371,9 +371,9 @@ export function InteractiveIEReport({
           <table className="w-full border-2 border-neutral-900 dark:border-neutral-700 text-sm border-collapse">
             <thead>
               <tr className="bg-neutral-100 dark:bg-neutral-800 border-b-2 border-neutral-900 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 font-bold text-xs uppercase">
-                <th className="py-2.5 px-3 text-left w-52 border-r border-neutral-800">Description</th>
-                <th className="py-2.5 px-3 text-left border-r border-neutral-800">Details / Breakdown</th>
-                <th className="py-2.5 px-3 text-right w-40">{isIncome ? "Income ( Rs )" : "Expenditure ( Rs )"}</th>
+                <th className="py-2.5 px-3 text-center w-52 border-r border-neutral-800">Description</th>
+                <th className="py-2.5 px-3 text-center border-r border-neutral-800">Details</th>
+                <th className="py-2.5 px-3 text-center w-40">{isIncome ? "Income ( Rs )" : "Expenditure ( Rs )"}</th>
               </tr>
             </thead>
             <tbody>
@@ -657,7 +657,7 @@ export function InteractiveIEReport({
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold bg-amber-400/20 text-amber-900 dark:text-amber-200 hover:bg-amber-400/35 border border-amber-400/50 cursor-pointer shadow-2xs transition-all"
                     >
                       <Plus className="h-3.5 w-3.5 text-amber-700 dark:text-amber-400" />
-                      <span>+ Add Yellow Section Heading (above Total)</span>
+                      <span> Add Yellow Section Heading (above Total)</span>
                     </button>
                   </td>
                 </tr>
@@ -683,23 +683,6 @@ export function InteractiveIEReport({
 
   return (
     <div className="space-y-8">
-      {/* Reset custom report modifications bar (Print hidden, Admin only) */}
-      {canEdit && (
-        <div className="flex items-center justify-between bg-neutral-100 dark:bg-neutral-800/60 px-4 py-2 rounded-md border border-neutral-200 dark:border-neutral-700 text-xs print:hidden">
-          <span className="text-neutral-600 dark:text-neutral-300 font-medium">
-            💡 <strong>Tip:</strong> Click <strong>+ Add Yellow Section Heading</strong> at the bottom of the table (just above Total) to create another event section. Use <strong>+ Add Row</strong> inside any section to add items directly to the report!
-          </span>
-          <button
-            type="button"
-            onClick={handleReset}
-            className="inline-flex items-center gap-1.5 text-xs text-neutral-500 hover:text-neutral-900 dark:hover:text-white transition-colors cursor-pointer"
-            title="Reset headings and manual items back to database values"
-          >
-            <RotateCcw className="h-3 w-3" />
-            <span>Reset Defaults</span>
-          </button>
-        </div>
-      )}
 
       {/* Income Section */}
       {renderTable(

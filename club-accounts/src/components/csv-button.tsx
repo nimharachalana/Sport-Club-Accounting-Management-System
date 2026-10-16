@@ -1,12 +1,14 @@
 'use client'
 
 import Papa from 'papaparse'
+import { Button } from "@/components/ui/button"
+import { Download } from "lucide-react"
 
 export function CsvButton({ rows, filename }: { rows: Record<string, unknown>[]; filename: string }) {
   return (
-    <button
+    <Button
       type="button"
-      className="rounded-md border border-input bg-background hover:bg-muted px-3 py-1.5 text-sm text-foreground cursor-pointer transition-colors"
+      className="h-9 px-4 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold shadow-md shadow-emerald-600/25 cursor-pointer gap-2 transition-all active:scale-[0.98]"
       onClick={() => {
         const blob = new Blob(['\uFEFF' + Papa.unparse(rows)], { type: 'text/csv;charset=utf-8' })
         const url = URL.createObjectURL(blob)
@@ -17,7 +19,8 @@ export function CsvButton({ rows, filename }: { rows: Record<string, unknown>[];
         URL.revokeObjectURL(url)
       }}
     >
-      CSV
-    </button>
+      <Download className="h-4 w-4 text-white" />
+      <span>Export CSV</span>
+    </Button>
   )
 }

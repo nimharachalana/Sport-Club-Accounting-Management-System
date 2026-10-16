@@ -140,7 +140,8 @@
   body {
     background: #fff;
   }
+
   tr {
     break-inside: avoid;
   }
-}
+}

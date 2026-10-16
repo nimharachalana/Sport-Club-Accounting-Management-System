@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useLocale, useTranslations } from "next-intl"
+import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import {
-  Trophy,
   LayoutDashboard,
   Receipt,
   Users,
@@ -19,6 +20,8 @@ import {
   Menu,
   X,
   ChevronRight,
+  Sun,
+  Moon,
 } from "lucide-react"
 import type { User } from "@supabase/supabase-js"
 import type { Profile } from "@/components/auth-provider"
@@ -42,6 +45,18 @@ export function AppSidebar({
   const t = useTranslations("Nav")
   const tTx = useTranslations("Transactions")
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+  const { setTheme, resolvedTheme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
+  const isDark = mounted ? resolvedTheme === "dark" : false
+
+  const toggleTheme = () => {
+    setTheme(isDark ? "light" : "dark")
+  }
 
   const handleSignOut = async () => {
     const supabase = createClient()
@@ -77,8 +92,15 @@ export function AppSidebar({
             onClick={() => setMobileOpen(false)}
             className="flex items-center gap-3 font-bold tracking-tight group"
           >
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white flex items-center justify-center shadow-md shadow-emerald-500/20 group-hover:scale-105 transition-transform">
-              <Trophy className="h-5 w-5" />
+            <div className="relative h-10 w-10 rounded-xl overflow-hidden shadow-sm shrink-0 border border-emerald-500/25 bg-slate-950 group-hover:scale-105 transition-transform">
+              <Image
+                src="/fot-logo.jpg"
+                alt="Faculty of Technology Logo"
+                fill
+                sizes="40px"
+                className="object-cover"
+                priority
+              />
             </div>
             <div className="flex flex-col">
               <span className="text-base font-bold leading-tight tracking-tight text-foreground">
@@ -126,19 +148,17 @@ export function AppSidebar({
                 key={item.href}
                 href={item.href}
                 onClick={() => setMobileOpen(false)}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all group ${
-                  isActive
+                className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all group ${isActive
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shadow-xs"
                     : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon
-                    className={`h-4 w-4 transition-colors ${
-                      isActive
+                    className={`h-4 w-4 transition-colors ${isActive
                         ? "text-emerald-600 dark:text-emerald-400"
                         : "text-muted-foreground group-hover:text-foreground"
-                    }`}
+                      }`}
                   />
                   <span>{item.label}</span>
                 </div>
@@ -152,7 +172,28 @@ export function AppSidebar({
       </div>
 
       {/* Bottom Footer Section */}
-      <div className="pt-4 mt-auto border-t space-y-3 px-1">
+      <div className="pt-4 mt-auto border-t space-y-2.5 px-1">
+        {/* Theme Switcher (Directly above Language Switcher) */}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleTheme}
+          className="w-full justify-between h-8 px-2.5 rounded-lg border-emerald-500/20 text-xs font-medium hover:bg-emerald-500/10 hover:text-emerald-600 cursor-pointer"
+          title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          <div className="flex items-center gap-2">
+            {isDark ? (
+              <Moon className="h-3.5 w-3.5 text-emerald-500" />
+            ) : (
+              <Sun className="h-3.5 w-3.5 text-emerald-500" />
+            )}
+            <span className="text-muted-foreground text-[11px]">{t("theme")}:</span>
+          </div>
+          <span className="font-semibold capitalize">
+            {isDark ? t("dark") : t("light")}
+          </span>
+        </Button>
+
         {/* Language Switcher */}
         <Button
           variant="outline"
@@ -217,8 +258,15 @@ export function AppSidebar({
       {/* Mobile Top Bar */}
       <div className="md:hidden sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/60 print:hidden">
         <a href="/" className="flex items-center gap-2.5 font-bold">
-          <div className="h-7 w-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center">
-            <Trophy className="h-4 w-4" />
+          <div className="relative h-8 w-8 rounded-lg overflow-hidden shadow-xs shrink-0 border border-emerald-500/25 bg-slate-950">
+            <Image
+              src="/fot-logo.jpg"
+              alt="Faculty of Technology Logo"
+              fill
+              sizes="32px"
+              className="object-cover"
+              priority
+            />
           </div>
           <span className="text-sm font-bold">Sport Club</span>
         </a>
@@ -233,6 +281,20 @@ export function AppSidebar({
               <Plus className="h-4 w-4" />
             </Button>
           )}
+
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={toggleTheme}
+            className="h-8 w-8 cursor-pointer"
+            title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {isDark ? (
+              <Moon className="h-3.5 w-3.5 text-emerald-500" />
+            ) : (
+              <Sun className="h-3.5 w-3.5 text-emerald-500" />
+            )}
+          </Button>
 
           <Button
             variant="outline"

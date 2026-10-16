@@ -24,7 +24,10 @@
     "settings": "Settings",
     "signOut": "Sign Out",
     "admin": "Admin Accountant",
-    "viewer": "Viewer"
+    "viewer": "Viewer",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark"
   },
   "Dashboard": {
     "title": "Dashboard",
