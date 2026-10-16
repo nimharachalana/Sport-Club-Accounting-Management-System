@@ -15,25 +15,6 @@ export default async function PeoplePage() {
     redirect("/login")
   }
 
-  // Get current user profile/role
-  const { data: myProfile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", user.id)
-    .single()
-
-  const isAdmin = myProfile?.role === "admin"
-
-  // Fetch all profiles from public.profiles
-  const { data: profiles } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, created_at")
-
-  const profileMap = new Map(
-    (profiles || []).map((p) => [p.id, p])
-  )
-
-  // Fetch auth users using the service role admin client
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 
@@ -44,19 +25,41 @@ export default async function PeoplePage() {
     created_at?: string
   }
 
-  let authUsers: AuthUser[] = []
-  if (serviceKey && supabaseUrl) {
-    const admin = createAdminClient(supabaseUrl, serviceKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    })
-    const { data: authData } = await admin.auth.admin.listUsers({
-      perPage: 1000,
-    })
-    authUsers = (authData?.users || []) as AuthUser[]
-  }
+  const adminClient =
+    serviceKey && supabaseUrl
+      ? createAdminClient(supabaseUrl, serviceKey, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false,
+          },
+        })
+      : null
+
+  // Fetch myProfile, all profiles, and auth users in parallel
+  const [
+    { data: myProfile },
+    { data: profiles },
+    authResult,
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("profiles")
+      .select("id, full_name, role, created_at"),
+    adminClient
+      ? adminClient.auth.admin.listUsers({ perPage: 1000 })
+      : Promise.resolve({ data: { users: [] } }),
+  ])
+
+  const isAdmin = myProfile?.role === "admin"
+  const authUsers: AuthUser[] = ((authResult?.data as any)?.users || []) as AuthUser[]
+
+  const profileMap = new Map(
+    (profiles || []).map((p) => [p.id, p])
+  )
 
   // Merge into ClubPerson list
   const people: ClubPerson[] = authUsers.map((authUser) => {

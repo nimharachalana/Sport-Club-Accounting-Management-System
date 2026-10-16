@@ -9,21 +9,33 @@ import "./globals.css";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const sinhala = Noto_Sans_Sinhala({ 
   subsets: ["sinhala", "latin"], 
-  variable: "--font-sinhala" 
+  variable: "--font-sinhala",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
   title: "Sport Club Accounting System",
   description: "Sport Club Accounting & Financial Management System",
+  icons: {
+    icon: [
+      { url: "/fot-logo.jpg" },
+      { url: "/fot-logo.jpg", sizes: "32x32", type: "image/jpeg" },
+      { url: "/fot-logo.jpg", sizes: "16x16", type: "image/jpeg" },
+    ],
+    shortcut: "/fot-logo.jpg",
+    apple: "/fot-logo.jpg",
+  },
 };
 
 export default async function RootLayout({

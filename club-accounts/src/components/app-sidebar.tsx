@@ -6,6 +6,7 @@ import { useLocale, useTranslations } from "next-intl"
 import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import {
   LayoutDashboard,
@@ -87,7 +88,7 @@ export function AppSidebar({
       <div className="space-y-6">
         {/* Brand */}
         <div className="flex items-center justify-between px-2 pt-2">
-          <a
+          <Link
             href="/"
             onClick={() => setMobileOpen(false)}
             className="flex items-center gap-3 font-bold tracking-tight group"
@@ -110,7 +111,7 @@ export function AppSidebar({
                 {t("brandSub")}
               </span>
             </div>
-          </a>
+          </Link>
 
           <button
             type="button"
@@ -144,9 +145,10 @@ export function AppSidebar({
             const isActive = pathname === item.href
 
             return (
-              <a
+              <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all group ${isActive
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-semibold shadow-xs"
@@ -165,7 +167,7 @@ export function AppSidebar({
                 {isActive && (
                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 )}
-              </a>
+              </Link>
             )
           })}
         </nav>
@@ -257,7 +259,7 @@ export function AppSidebar({
     <>
       {/* Mobile Top Bar */}
       <div className="md:hidden sticky top-0 z-40 flex h-14 items-center justify-between border-b bg-background/95 px-4 backdrop-blur supports-backdrop-filter:bg-background/60 print:hidden">
-        <a href="/" className="flex items-center gap-2.5 font-bold">
+        <Link href="/" className="flex items-center gap-2.5 font-bold">
           <div className="relative h-8 w-8 rounded-lg overflow-hidden shadow-xs shrink-0 border border-emerald-500/25 bg-slate-950">
             <Image
               src="/fot-logo.jpg"
@@ -269,7 +271,7 @@ export function AppSidebar({
             />
           </div>
           <span className="text-sm font-bold">Sport Club</span>
-        </a>
+        </Link>
 
         <div className="flex items-center gap-2">
           {isAdmin && onOpenAddTransaction && (

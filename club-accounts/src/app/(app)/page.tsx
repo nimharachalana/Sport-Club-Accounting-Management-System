@@ -6,51 +6,55 @@ import type { Category, Transaction } from "@/components/transactions/types"
 export default async function DashboardPage() {
   const supabase = await createClient()
 
-  // 1. Auth & Profile
+  // 1. Auth
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role, full_name")
-    .eq("id", user?.id || "")
-    .single()
+  const userId = user?.id || ""
 
-  // 2. Settings
-  const { data: settings } = await supabase
-    .from("settings")
-    .select("*")
-    .single()
-
-  // 3. Categories
-  const { data: categoriesData } = await supabase
-    .from("categories")
-    .select("id, type, name_en, name_si")
-    .order("name_en")
+  // 2. Fetch Profile, Settings, Categories, and Transactions in parallel
+  const [
+    { data: profile },
+    { data: settings },
+    { data: categoriesData },
+    { data: txData },
+  ] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("role, full_name")
+      .eq("id", userId)
+      .single(),
+    supabase
+      .from("settings")
+      .select("opening_cash, opening_bank, currency, club_name")
+      .single(),
+    supabase
+      .from("categories")
+      .select("id, type, name_en, name_si")
+      .order("name_en"),
+    supabase
+      .from("transactions")
+      .select(`
+        id,
+        type,
+        tx_date,
+        amount,
+        category_id,
+        party,
+        bill_no,
+        method,
+        note,
+        created_by,
+        created_at,
+        category:categories(id, type, name_en, name_si),
+        photos:transaction_photos(id, transaction_id, storage_path)
+      `)
+      .order("tx_date", { ascending: false })
+      .order("created_at", { ascending: false }),
+  ])
 
   const categories: Category[] = categoriesData || []
-
-  // 4. Transactions joined with categories & photos
-  const { data: txData } = await supabase
-    .from("transactions")
-    .select(`
-      id,
-      type,
-      tx_date,
-      amount,
-      category_id,
-      party,
-      bill_no,
-      method,
-      note,
-      created_by,
-      created_at,
-      category:categories(id, type, name_en, name_si),
-      photos:transaction_photos(id, transaction_id, storage_path)
-    `)
-    .order("tx_date", { ascending: false })
-    .order("created_at", { ascending: false })
 
   const transactions: Transaction[] = (txData || []).map((t: any) => ({
     id: t.id,

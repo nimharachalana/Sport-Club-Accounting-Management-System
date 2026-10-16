@@ -21,22 +21,21 @@ export default async function AppLayout({
     redirect("/login")
   }
 
-  // Read role from the profiles table
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, full_name, role, created_at")
-    .eq("id", user.id)
-    .single()
+  // Fetch profile and categories in parallel
+  const [{ data: profile }, { data: categoriesData }] = await Promise.all([
+    supabase
+      .from("profiles")
+      .select("id, full_name, role, created_at")
+      .eq("id", user.id)
+      .single(),
+    supabase
+      .from("categories")
+      .select("id, type, name_en, name_si")
+      .order("name_en"),
+  ])
 
   const role = profile?.role ?? "viewer"
   const isAdmin = role === "admin"
-
-  // Fetch categories for global transaction creation
-  const { data: categoriesData } = await supabase
-    .from("categories")
-    .select("id, type, name_en, name_si")
-    .order("name_en")
-
   const categories: Category[] = categoriesData || []
 
   return (
