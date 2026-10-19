@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useState, useMemo } from "react"
 import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { fmt } from "@/lib/money"
@@ -31,6 +31,10 @@ const CATEGORY_COLORS = [
   "#ec4899", // Pink
   "#06b6d4", // Cyan
   "#f97316", // Orange
+  "#6366f1", // Indigo
+  "#14b8a6", // Teal
+  "#e11d48", // Rose
+  "#84cc16", // Lime
   "#64748b", // Slate
 ]
 
@@ -91,6 +95,41 @@ export function FinancialCharts({ transactions }: FinancialChartsProps) {
       }))
       .sort((a, b) => b.value - a.value)
   }, [transactions])
+
+  const [showAllCategories, setShowAllCategories] = useState(false)
+
+  const totalExpenseAmount = useMemo(() => {
+    return categoryData.reduce((acc, curr) => acc + curr.value, 0)
+  }, [categoryData])
+
+  const categoryBreakdownWithPercent = useMemo(() => {
+    return categoryData.map((item, idx) => ({
+      ...item,
+      color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
+      percent: totalExpenseAmount > 0 ? (item.value / totalExpenseAmount) * 100 : 0,
+    }))
+  }, [categoryData, totalExpenseAmount])
+
+  const displayCategories = useMemo(() => {
+    if (categoryBreakdownWithPercent.length <= 6 || showAllCategories) {
+      return categoryBreakdownWithPercent
+    }
+
+    const top5 = categoryBreakdownWithPercent.slice(0, 5)
+    const remaining = categoryBreakdownWithPercent.slice(5)
+    const otherTotal = remaining.reduce((sum, item) => sum + item.value, 0)
+    const otherPercent = totalExpenseAmount > 0 ? (otherTotal / totalExpenseAmount) * 100 : 0
+
+    return [
+      ...top5,
+      {
+        name: `Other Categories (${remaining.length} more)`,
+        value: otherTotal,
+        color: "#64748b",
+        percent: otherPercent,
+      },
+    ]
+  }, [categoryBreakdownWithPercent, totalExpenseAmount, showAllCategories])
 
   const hasCashFlowData = cashFlowData.length > 0
   const hasCategoryData = categoryData.length > 0
@@ -193,71 +232,94 @@ export function FinancialCharts({ transactions }: FinancialChartsProps) {
         </CardContent>
       </Card>
 
-      {/* Chart 2: Category Breakdown Donut / Pie Chart */}
-      <Card className="rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs">
-        <CardHeader className="pb-2">
+      {/* Chart 2: Option A - Modern Horizontal Ranking Breakdown */}
+      <Card className="rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs flex flex-col justify-between">
+        <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-base font-bold flex items-center gap-2">
-                <PieIcon className="h-4 w-4 text-emerald-500" />
+                <BarChart3 className="h-4 w-4 text-rose-500" />
                 {t("categoryBreakdown")}
               </CardTitle>
               <CardDescription className="text-xs">
-                {tTx("expense")} &bull; {t("manageReportsDesc")}
+                {tTx("expense")} &bull; Ranked by expenditure
               </CardDescription>
             </div>
+            {totalExpenseAmount > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-rose-600 dark:text-rose-400 bg-rose-500/10 px-2.5 py-0.5 rounded-full border border-rose-500/20">
+                  {fmt(totalExpenseAmount)}
+                </span>
+                {categoryBreakdownWithPercent.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllCategories((prev) => !prev)}
+                    className="text-[11px] font-semibold text-primary hover:underline cursor-pointer"
+                  >
+                    {showAllCategories ? "Show Top 5" : `All (${categoryBreakdownWithPercent.length})`}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </CardHeader>
-        <CardContent className="pt-2">
+        <CardContent className="pt-0 flex-1 flex flex-col justify-between space-y-4">
           {hasCategoryData ? (
-            <div className="h-[260px] w-full flex items-center justify-center">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (!active || !payload || payload.length === 0) return null
-                      const item = payload[0]
-                      return (
-                        <div className="rounded-xl border bg-popover/95 backdrop-blur-md p-2.5 shadow-lg text-xs space-y-1">
-                          <p className="font-semibold text-popover-foreground">{item.name}</p>
-                          <p className="font-bold text-rose-500 tabular-nums">
-                            {fmt(item.payload.value)}
-                          </p>
-                        </div>
-                      )
-                    }}
-                  />
-                  <Pie
-                    data={categoryData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={55}
-                    outerRadius={85}
-                    paddingAngle={3}
-                    dataKey="value"
-                  >
-                    {categoryData.map((_, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={CATEGORY_COLORS[index % CATEGORY_COLORS.length]}
+            <>
+              {/* Segmented multi-color overview bar */}
+              <div className="space-y-1">
+                <div className="h-2.5 w-full bg-muted/60 rounded-full overflow-hidden flex shadow-inner">
+                  {displayCategories.map((cat, idx) => (
+                    <div
+                      key={idx}
+                      className="h-full transition-all duration-300 hover:opacity-85"
+                      style={{
+                        width: `${cat.percent}%`,
+                        backgroundColor: cat.color,
+                      }}
+                      title={`${cat.name}: ${fmt(cat.value)} (${cat.percent.toFixed(1)}%)`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Ranked category rows */}
+              <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                {displayCategories.map((cat, idx) => (
+                  <div key={idx} className="space-y-1.5 group">
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="h-2.5 w-2.5 rounded-full shrink-0 shadow-xs"
+                          style={{ backgroundColor: cat.color }}
+                        />
+                        <span className="font-semibold text-foreground truncate" title={cat.name}>
+                          {cat.name}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2.5 shrink-0">
+                        <span className="text-[11px] font-bold px-1.5 py-0.2 rounded-md bg-muted text-muted-foreground tabular-nums">
+                          {cat.percent.toFixed(1)}%
+                        </span>
+                        <span className="font-bold tabular-nums text-foreground">
+                          {fmt(cat.value)}
+                        </span>
+                      </div>
+                    </div>
+                    {/* Modern rounded progress bar */}
+                    <div className="h-1.5 w-full bg-muted/50 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-500 group-hover:brightness-110"
+                        style={{
+                          width: `${Math.max(cat.percent, 2)}%`,
+                          backgroundColor: cat.color,
+                        }}
                       />
-                    ))}
-                  </Pie>
-                  <Legend
-                    layout="vertical"
-                    verticalAlign="middle"
-                    align="right"
-                    iconType="circle"
-                    iconSize={8}
-                    formatter={(val) => (
-                      <span className="text-xs text-muted-foreground max-w-[120px] truncate inline-block">
-                        {val}
-                      </span>
-                    )}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
           ) : (
             <div className="h-[260px] flex flex-col items-center justify-center text-center p-6 text-muted-foreground/60 border border-dashed rounded-xl">
               <PieIcon className="h-8 w-8 mb-2 opacity-40" />
