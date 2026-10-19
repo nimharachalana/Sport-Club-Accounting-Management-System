@@ -475,3 +475,134 @@ export async function deleteCategory(id: string): Promise<void> {
   revalidatePath('/')
 }
 
+export interface ReportLayoutData {
+  from: string
+  to: string
+  updatedAt: string
+  sections: Array<{
+    id: string
+    type: 'income' | 'expense'
+    bannerTitle: string
+    itemIds: string[]
+    showTotal: boolean
+    totalLabel?: string
+  }>
+  items: Array<{
+    id: string
+    type: 'income' | 'expense'
+    tx_date: string
+    amount: number
+    party?: string | null
+    note?: string | null
+    customName?: string
+    customDetail?: string
+    customAmount?: number
+    customCategoryName?: string
+    customNote?: string
+    category?: { id: string; name_en: string; name_si: string } | null
+  }>
+  verticalMerges: Array<{
+    id: string
+    type: 'income' | 'expense'
+    title: string
+    itemIds: string[]
+  }>
+  colSpanItemIds: string[]
+}
+
+/**
+ * Saves a report layout snapshot (sections, banners, moved rows, custom details) for a period.
+ * Accessible to all visitors viewing the report.
+ */
+export async function saveReportLayout(
+  from: string,
+  to: string,
+  layoutData: ReportLayoutData
+): Promise<void> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    throw new Error('Not signed in')
+  }
+
+  const { data: me } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (me?.role !== 'admin') {
+    throw new Error('Admins only')
+  }
+
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  if (!serviceKey || !supabaseUrl) {
+    throw new Error('Server environment missing Supabase configuration')
+  }
+
+  const admin = createAdminClient(supabaseUrl, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+
+  // Ensure 'reports' bucket exists
+  const { data: buckets } = await admin.storage.listBuckets()
+  if (!buckets?.some((b) => b.name === 'reports')) {
+    await admin.storage.createBucket('reports', { public: true })
+  }
+
+  const fileName = `layout_${from}_${to}.json`
+  const fileContent = JSON.stringify(layoutData, null, 2)
+
+  const { error } = await admin.storage
+    .from('reports')
+    .upload(fileName, fileContent, {
+      contentType: 'application/json',
+      upsert: true,
+    })
+
+  if (error) {
+    console.error('Error saving report layout:', error)
+    throw new Error(error.message)
+  }
+
+  revalidatePath('/reports')
+  revalidatePath('/reports/income-expenditure')
+}
+
+/**
+ * Loads a saved report layout snapshot for a period.
+ */
+export async function getReportLayout(
+  from: string,
+  to: string
+): Promise<ReportLayoutData | null> {
+  try {
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!serviceKey || !supabaseUrl) return null
+
+    const admin = createAdminClient(supabaseUrl, serviceKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    })
+
+    const fileName = `layout_${from}_${to}.json`
+    const { data, error } = await admin.storage.from('reports').download(fileName)
+
+    if (error || !data) {
+      return null
+    }
+
+    const text = await data.text()
+    if (!text) return null
+    return JSON.parse(text) as ReportLayoutData
+  } catch (err) {
+    console.warn(`Could not load report layout for ${from} to ${to}:`, err)
+    return null
+  }
+}
+
+

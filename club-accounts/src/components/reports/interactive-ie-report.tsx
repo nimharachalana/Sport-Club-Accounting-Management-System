@@ -4,6 +4,9 @@ import { useState, useEffect, useMemo, Fragment } from "react"
 import { fmt } from "@/lib/money"
 import { useAuth } from "@/components/auth-provider"
 import { ReportSignatures } from "./report-signatures"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { saveReportLayout, type ReportLayoutData } from "@/lib/actions"
 import {
   Plus,
   Pencil,
@@ -19,6 +22,8 @@ import {
   EyeOff,
   ChevronUp,
   ChevronDown,
+  Save,
+  Loader2,
 } from "lucide-react"
 
 export interface ReportItem {
@@ -57,6 +62,7 @@ export interface SectionConfig {
 
 interface InteractiveIEReportProps {
   initialTransactions: ReportItem[]
+  initialLayout?: ReportLayoutData | null
   currency: string
   from: string
   to: string
@@ -67,6 +73,43 @@ function formatDate(dateStr: string): string {
   if (!dateStr) return ""
   const [y, m, d] = dateStr.split("-")
   return y && m && d ? `${d}/${m}/${y}` : dateStr
+}
+
+function buildInitialData(
+  initialLayout: ReportLayoutData | null | undefined,
+  initialTransactions: ReportItem[],
+  fromPeriod: string
+) {
+  if (initialLayout && Array.isArray(initialLayout.items) && initialLayout.items.length > 0) {
+    const allLoaded = initialLayout.items.map((it: any) => ({ ...it }))
+    const existingIds = new Set(allLoaded.map((it) => it.id))
+    for (const tx of initialTransactions) {
+      if (!existingIds.has(tx.id)) {
+        allLoaded.push({ ...tx })
+      }
+    }
+    const vMerges: VerticalMergeGroup[] = Array.isArray(initialLayout.verticalMerges)
+      ? initialLayout.verticalMerges.map((vm: any) => ({
+          id: vm.id,
+          type: (vm.type || "expense") as "income" | "expense",
+          title: vm.title || "",
+          itemIds: Array.isArray(vm.itemIds) ? vm.itemIds : [],
+        }))
+      : []
+
+    return {
+      items: allLoaded,
+      sections: Array.isArray(initialLayout.sections) ? initialLayout.sections : [],
+      verticalMerges: vMerges,
+      colSpanItemIds: Array.isArray(initialLayout.colSpanItemIds) ? initialLayout.colSpanItemIds : [],
+    }
+  }
+  return {
+    items: initialTransactions.map((tx) => ({ ...tx })),
+    sections: [],
+    verticalMerges: [],
+    colSpanItemIds: [],
+  }
 }
 
 function getItemName(tx: ReportItem): string {
@@ -115,6 +158,7 @@ function renderDetailBullets(detail: string | null) {
 
 export function InteractiveIEReport({
   initialTransactions,
+  initialLayout,
   currency,
   from,
   to,
@@ -130,19 +174,26 @@ export function InteractiveIEReport({
 
   const canEdit = mounted && isAdmin
 
+  const initialData = useMemo(
+    () => buildInitialData(initialLayout, initialTransactions, from),
+    [initialLayout, initialTransactions, from]
+  )
+
   // Base items state
-  const [items, setItems] = useState<ReportItem[]>(() => {
-    return initialTransactions.map((tx) => ({ ...tx }))
-  })
+  const [items, setItems] = useState<ReportItem[]>(initialData.items)
 
   // Sections (Yellow Banner at TOP, included items in middle, Cyan Total at BOTTOM)
-  const [sections, setSections] = useState<SectionConfig[]>([])
+  const [sections, setSections] = useState<SectionConfig[]>(initialData.sections)
 
   // Vertical merge groups (rowSpan = N on Column 1)
-  const [verticalMerges, setVerticalMerges] = useState<VerticalMergeGroup[]>([])
+  const [verticalMerges, setVerticalMerges] = useState<VerticalMergeGroup[]>(initialData.verticalMerges)
 
   // Horizontal column merges (colSpan = 2)
-  const [colSpanItemIds, setColSpanItemIds] = useState<string[]>([])
+  const [colSpanItemIds, setColSpanItemIds] = useState<string[]>(initialData.colSpanItemIds)
+
+  // Save report layout server state
+  const [isSavingLayout, setIsSavingLayout] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle")
 
   // Checkbox Selection for Manual Merging or Section Creation
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([])
@@ -192,8 +243,20 @@ export function InteractiveIEReport({
     }
   }, [openMoveMenuId])
 
-  // Load customizations from localStorage
+  // Sync state if initialLayout changes (e.g. server revalidation)
   useEffect(() => {
+    if (initialLayout && Array.isArray(initialLayout.items) && initialLayout.items.length > 0) {
+      const data = buildInitialData(initialLayout, initialTransactions, from)
+      setItems(data.items)
+      setSections(data.sections)
+      setVerticalMerges(data.verticalMerges)
+      setColSpanItemIds(data.colSpanItemIds)
+    }
+  }, [initialLayout, initialTransactions, from])
+
+  // Fallback: Load customizations from localStorage if no initialLayout was saved yet
+  useEffect(() => {
+    if (initialLayout) return
     try {
       const saved = localStorage.getItem(storageKey)
       if (saved) {
@@ -237,7 +300,13 @@ export function InteractiveIEReport({
           setSections(parsed.sections)
         }
         if (Array.isArray(parsed.verticalMerges)) {
-          setVerticalMerges(parsed.verticalMerges)
+          const vMerges: VerticalMergeGroup[] = parsed.verticalMerges.map((vm: any) => ({
+            id: vm.id,
+            type: (vm.type || "expense") as "income" | "expense",
+            title: vm.title || "",
+            itemIds: Array.isArray(vm.itemIds) ? vm.itemIds : [],
+          }))
+          setVerticalMerges(vMerges)
         }
         if (Array.isArray(parsed.colSpanItemIds)) {
           setColSpanItemIds(parsed.colSpanItemIds)
@@ -246,7 +315,39 @@ export function InteractiveIEReport({
     } catch {
       // ignore
     }
-  }, [storageKey, initialTransactions, from])
+  }, [initialLayout, storageKey, initialTransactions, from])
+
+  // Save report layout to Supabase (visible to all visitors)
+  const handleSaveReportLayout = async () => {
+    setIsSavingLayout(true)
+    setSaveStatus("saving")
+    try {
+      const layoutData: ReportLayoutData = {
+        from,
+        to,
+        updatedAt: new Date().toISOString(),
+        sections,
+        items,
+        verticalMerges,
+        colSpanItemIds,
+      }
+
+      await saveReportLayout(from, to, layoutData)
+
+      // Also ensure localStorage is up to date
+      saveAll(items, sections, verticalMerges, colSpanItemIds)
+
+      setSaveStatus("saved")
+      toast.success("Report layout saved successfully! Visible to all visitors.")
+      setTimeout(() => setSaveStatus("idle"), 3500)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to save report layout"
+      toast.error(msg)
+      setSaveStatus("idle")
+    } finally {
+      setIsSavingLayout(false)
+    }
+  }
 
   // Save customizations to localStorage
   const saveAll = (
@@ -1907,6 +2008,56 @@ export function InteractiveIEReport({
 
   return (
     <div className="space-y-6 sm:space-y-8">
+      {/* Admin Action Bar with Save Report Layout Button */}
+      {canEdit && (
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 sm:px-4 sm:py-3 bg-neutral-900 dark:bg-neutral-800 text-white rounded-xl shadow-md border border-neutral-700 print:hidden animate-in fade-in-50 duration-200">
+          <div className="flex items-center gap-2.5">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+            </span>
+            <div>
+              <span className="text-xs sm:text-sm font-extrabold text-white">
+                Admin Report Editor Mode
+              </span>
+              <p className="text-[11px] text-neutral-300 hidden sm:block">
+                Edit row names, bullet notes, sections, or row orders. Click &ldquo;Save Report Layout&rdquo; to make all changes visible to visitors.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              type="button"
+              onClick={handleSaveReportLayout}
+              disabled={isSavingLayout}
+              className={`h-8 px-4 text-xs font-bold gap-1.5 cursor-pointer shadow-sm transition-all ${
+                saveStatus === "saved"
+                  ? "bg-emerald-600 hover:bg-emerald-600 text-white"
+                  : "bg-emerald-600 hover:bg-emerald-500 text-white"
+              }`}
+            >
+              {isSavingLayout ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <span>Saving...</span>
+                </>
+              ) : saveStatus === "saved" ? (
+                <>
+                  <Check className="h-3.5 w-3.5" />
+                  <span>Saved ✓</span>
+                </>
+              ) : (
+                <>
+                  <Save className="h-3.5 w-3.5" />
+                  <span>Save Report Layout</span>
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* 1. Income Section */}
       {renderTable(
         "income",

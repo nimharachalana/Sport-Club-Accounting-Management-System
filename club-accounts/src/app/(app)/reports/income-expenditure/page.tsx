@@ -4,6 +4,7 @@ import { defaultPeriod } from '@/lib/period'
 import { ReportShell } from '@/components/report-shell'
 import { PeriodForm } from '@/components/period-form'
 import { InteractiveIEReport, type ReportItem } from '@/components/reports/interactive-ie-report'
+import { getReportLayout } from '@/lib/actions'
 
 export default async function Page({
   searchParams,
@@ -13,7 +14,7 @@ export default async function Page({
   const { from, to } = defaultPeriod(await searchParams)
   const supabase = await createClient()
 
-  const [s, { data: transactionsData }] = await Promise.all([
+  const [s, { data: transactionsData }, savedLayout] = await Promise.all([
     getSettings(),
     supabase
       .from('transactions')
@@ -32,6 +33,7 @@ export default async function Page({
       .lte('tx_date', to)
       .order('tx_date', { ascending: true })
       .limit(5000),
+    getReportLayout(from, to),
   ])
 
   // Explicit type cast for Supabase relation result
@@ -79,6 +81,7 @@ export default async function Page({
           ) : (
             <InteractiveIEReport
               initialTransactions={transactions}
+              initialLayout={savedLayout}
               currency={s.currency}
               from={from}
               to={to}
