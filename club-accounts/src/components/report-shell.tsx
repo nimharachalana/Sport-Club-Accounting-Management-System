@@ -9,7 +9,7 @@ export function ReportShell(props: {
   children: React.ReactNode
 }) {
   return (
-    <article className="mx-auto max-w-4xl space-y-6">
+    <article className="mx-auto max-w-4xl print:max-w-none print:w-full print:m-0 space-y-6 print:space-y-4">
       <header className="border-b-2 border-foreground pb-3 flex flex-col sm:flex-row sm:items-start justify-between gap-4 print:hidden">
         <div>
           <p className="text-sm font-semibold tracking-wide text-primary uppercase">{props.club}</p>
