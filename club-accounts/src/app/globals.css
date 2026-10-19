@@ -132,16 +132,42 @@
 }
 
 @page {
-  size: A4;
-  margin: 15mm;
+  size: A4 portrait;
+  margin: 10mm 12mm;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
 }
 
 @media print {
   body {
-    background: #fff;
+    background: #fff !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Prevent repeating thead (column headers) on every printed page */
+  thead {
+    display: table-row-group !important;
+  }
+
+  /* Prevent repeating tfoot (Total Income / Expenditure) on every printed page */
+  tfoot {
+    display: table-row-group !important;
   }
 
   tr {
-    break-inside: avoid;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Solid black table and cell borders matching official PDF */
+  table {
+    border: 2px solid #000 !important;
+    border-collapse: collapse !important;
+  }
+
+  table th,
+  table td {
+    border-color: #000 !important;
   }
 }

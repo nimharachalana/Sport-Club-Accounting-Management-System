@@ -1131,7 +1131,7 @@ export function InteractiveIEReport({
     return (
       <Fragment key={item.id}>
         <tr
-          className={`border-b border-neutral-900 dark:border-neutral-700 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/40 group/row transition-colors ${
+          className={`border-b border-neutral-900 dark:border-neutral-700 hover:bg-neutral-50/50 dark:hover:bg-neutral-800/40 group/row transition-colors print:break-inside-avoid ${
             isSelected ? "bg-blue-50/70 dark:bg-blue-950/25" : ""
           }`}
         >
@@ -1639,8 +1639,8 @@ export function InteractiveIEReport({
         {/* Responsive Table Container */}
         <div className="overflow-x-auto -mx-1 sm:mx-0 shadow-2xs rounded-lg border border-neutral-900 dark:border-neutral-700 [print:overflow-visible] [print:border-none]">
           <table className="w-full min-w-[580px] sm:min-w-full border-2 border-neutral-900 dark:border-neutral-700 text-xs sm:text-sm border-collapse">
-            <thead>
-              <tr className="bg-neutral-100 dark:bg-neutral-800 border-b-2 border-neutral-900 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 font-bold uppercase tracking-wider text-[11px] sm:text-xs">
+            <thead className="print:[display:table-row-group]">
+              <tr className="bg-white dark:bg-neutral-800 border-b-2 border-neutral-900 dark:border-neutral-700 text-neutral-950 dark:text-neutral-50 font-bold uppercase tracking-wider text-xs sm:text-sm">
                 {canEdit && (
                   <th className="py-2.5 px-2 text-center w-8 border-r border-neutral-900 dark:border-neutral-700 print:hidden select-none">
                     <button
@@ -1663,13 +1663,14 @@ export function InteractiveIEReport({
                     </button>
                   </th>
                 )}
-                <th className="py-2.5 px-3 sm:px-4 text-center align-middle w-52 sm:w-64 border-r border-neutral-900 dark:border-neutral-700">
+                {/* PDF Header: Description spans across both category & detail columns */}
+                <th
+                  colSpan={2}
+                  className="py-2.5 px-4 text-center align-middle border-r border-neutral-900 dark:border-neutral-700 font-bold text-xs sm:text-sm tracking-wider"
+                >
                   Description
                 </th>
-                <th className="py-2.5 px-4 text-center align-middle border-r border-neutral-900 dark:border-neutral-700">
-                  Details
-                </th>
-                <th className="py-2.5 px-4 text-center align-middle w-36 sm:w-44">
+                <th className="py-2.5 px-4 text-center align-middle w-36 sm:w-44 font-bold text-xs sm:text-sm tracking-wider">
                   {isIncome ? "Income ( Rs )" : "Expenditure ( Rs )"}
                 </th>
               </tr>
@@ -1678,7 +1679,8 @@ export function InteractiveIEReport({
               {/* If table is empty */}
               {itemList.length === 0 ? (
                 <tr>
-                  <td colSpan={canEdit ? 4 : 3} className="py-6 text-center text-xs text-neutral-500 italic">
+                  {canEdit && <td className="print:hidden border-r border-neutral-900 dark:border-neutral-700"></td>}
+                  <td colSpan={3} className="py-6 text-center text-xs text-neutral-500 italic">
                     {isIncome ? "No income recorded in this period." : "No expenditure recorded in this period."}
                   </td>
                 </tr>
@@ -1703,9 +1705,10 @@ export function InteractiveIEReport({
                           elements.push(
                             <Fragment key={sec.id}>
                               {/* A. YELLOW SECTION BANNER AT THE TOP OF INCLUDED DETAILS */}
-                              <tr className="bg-[#fef08a] dark:bg-yellow-300 text-neutral-950 font-bold text-center border-y-2 border-neutral-900 print:bg-[#fef08a]!">
+                              <tr className="bg-[#fef08a] dark:bg-yellow-300 text-neutral-950 font-bold text-center border-y-2 border-neutral-900 print:bg-[#fef08a]! print:break-inside-avoid">
+                                {canEdit && <td className="print:hidden border-r border-neutral-900 dark:border-neutral-700"></td>}
                                 <td
-                                  colSpan={canEdit ? 4 : 3}
+                                  colSpan={3}
                                   className="py-2.5 px-4 text-center text-xs sm:text-sm font-extrabold tracking-wide"
                                 >
                                   {isEditingBanner ? (
@@ -1878,10 +1881,11 @@ export function InteractiveIEReport({
 
                               {/* C. CYAN TOTAL ROW AT THE BOTTOM OF INCLUDED DETAILS (AUTOMATICALLY CALCULATED) */}
                               {sec.showTotal && (
-                                <tr className="bg-[#7dd3fc] dark:bg-sky-300 text-neutral-950 font-bold border-b-2 border-neutral-900 print:bg-[#7dd3fc]!">
+                                <tr className="bg-[#7dd3fc] dark:bg-sky-300 text-neutral-950 font-bold border-b-2 border-neutral-900 print:bg-[#7dd3fc]! print:break-inside-avoid">
+                                  {canEdit && <td className="print:hidden border-r border-neutral-900 dark:border-neutral-700"></td>}
                                   <td
-                                    colSpan={canEdit ? 3 : 2}
-                                    className="py-2.5 px-4 font-extrabold text-xs sm:text-sm text-center"
+                                    colSpan={2}
+                                    className="py-2.5 px-4 font-extrabold text-xs sm:text-sm text-center border-r border-neutral-900 dark:border-neutral-700"
                                   >
                                     <span>{sec.totalLabel || "Total"}</span>
                                   </td>
@@ -1903,8 +1907,9 @@ export function InteractiveIEReport({
                     typeSections.forEach((sec) => {
                       if (!renderedSectionIds.has(sec.id)) {
                         elements.push(
-                          <tr key={sec.id} className="bg-[#fef08a] dark:bg-yellow-300 text-neutral-950 font-bold text-center border-y-2 border-neutral-900 print:bg-[#fef08a]!">
-                            <td colSpan={canEdit ? 4 : 3} className="py-2.5 px-4 text-center text-xs sm:text-sm font-extrabold tracking-wide">
+                          <tr key={sec.id} className="bg-[#fef08a] dark:bg-yellow-300 text-neutral-950 font-bold text-center border-y-2 border-neutral-900 print:bg-[#fef08a]! print:break-inside-avoid">
+                            {canEdit && <td className="print:hidden border-r border-neutral-900 dark:border-neutral-700"></td>}
+                            <td colSpan={3} className="py-2.5 px-4 text-center text-xs sm:text-sm font-extrabold tracking-wide">
                               <span>{sec.bannerTitle}</span>
                             </td>
                           </tr>
@@ -1987,11 +1992,12 @@ export function InteractiveIEReport({
             </tbody>
 
             {/* Grand Total Row at Bottom */}
-            <tfoot>
-              <tr className={`${totalBg} text-neutral-950 font-extrabold border-t-2 border-neutral-900`}>
+            <tfoot className="print:[display:table-row-group]">
+              <tr className={`${totalBg} text-neutral-950 font-extrabold border-t-2 border-neutral-900 print:break-inside-avoid`}>
+                {canEdit && <td className="print:hidden border-r border-neutral-900 dark:border-neutral-700"></td>}
                 <td
-                  colSpan={canEdit ? 3 : 2}
-                  className="py-2.5 px-4 font-extrabold text-xs sm:text-base text-center"
+                  colSpan={2}
+                  className="py-2.5 px-4 font-extrabold text-xs sm:text-base text-center border-r border-neutral-900 dark:border-neutral-700"
                 >
                   {totalLabel}
                 </td>
@@ -2077,7 +2083,7 @@ export function InteractiveIEReport({
       )}
 
       {/* 3. Final Accounting Summary Block (Matching Page 6 of PDF) */}
-      <section className="pt-2">
+      <section className="pt-2 print:break-inside-avoid">
         <div className="w-full border-2 border-neutral-900 dark:border-neutral-700 divide-y-2 divide-neutral-900 dark:divide-neutral-700 text-xs sm:text-base font-extrabold">
           <div className="flex items-center justify-between bg-[#9ca3af] dark:bg-neutral-400 text-neutral-950 px-3 sm:px-4 py-2 sm:py-2.5 print:bg-[#9ca3af]!">
             <span>Total Income</span>
@@ -2089,7 +2095,7 @@ export function InteractiveIEReport({
           </div>
           <div className="flex items-center justify-between bg-[#4ade80] dark:bg-emerald-400 text-neutral-950 px-3 sm:px-4 py-2.5 sm:py-3 print:bg-[#4ade80]!">
             <span className="text-sm sm:text-lg">
-              {net >= 0 ? "Cash in Hand (Surplus)" : "Net Deficit"}
+              {net >= 0 ? "Cash in Hand" : "Net Deficit"}
             </span>
             <span className="tabular-nums text-base sm:text-xl font-black">{money(Math.abs(net))}</span>
           </div>
