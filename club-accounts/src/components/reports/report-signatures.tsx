@@ -7,10 +7,9 @@ interface ReportSignaturesProps {
   locale: string
 }
 
-export function ReportSignatures({ locale }: ReportSignaturesProps) {
+export function ReportSignatures({ locale = "en" }: ReportSignaturesProps) {
   const { isAdmin } = useAuth()
   const [mounted, setMounted] = useState(false)
-  const isSi = locale === "si"
 
   // Allow manual entry with localStorage persistence (Admin only)
   const [seniorTreasurer, setSeniorTreasurer] = useState("")
@@ -61,7 +60,7 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
         {/* Recommended by Senior Treasurer */}
         <div className="space-y-3">
           <p className="font-bold text-sm text-foreground">
-            {isSi ? "ජ්‍යෙෂ්ඨ භාණ්ඩාගාරික විසින් නිර්දේශ කරන ලදී" : "Recommended by Senior Treasurer"}
+            Recommended by Senior Treasurer
           </p>
 
           <div className="space-y-1">
@@ -70,7 +69,7 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
               {canEdit ? (
                 <input
                   type="text"
-                  placeholder={isSi ? "නම ඇතුළත් කරන්න..." : "Type Senior Treasurer name..."}
+                  placeholder="Type Senior Treasurer name..."
                   value={seniorTreasurer}
                   onChange={(e) => handleSeniorChange(e.target.value)}
                   className="w-full max-w-xs text-sm border-b border-input focus:border-foreground bg-transparent py-1 text-foreground placeholder:text-muted-foreground/60 outline-hidden font-medium"
@@ -89,19 +88,15 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
 
           <div className="pt-6 space-y-1.5">
             <div className="border-b border-dashed border-foreground/60 w-52 sm:w-60" />
-            <p className="text-xs text-muted-foreground">
-              {isSi ? "අත්සන / Signature" : "Signature"}
-            </p>
-            <p className="text-xs text-muted-foreground pt-1">
-              {isSi ? "දිනය / Date: ........................" : "Date: ........................"}
-            </p>
+            <p className="text-xs text-muted-foreground">Signature</p>
+            <p className="text-xs text-muted-foreground pt-1">Date: ........................</p>
           </div>
         </div>
 
         {/* Approved by Dean */}
         <div className="space-y-3 sm:text-right sm:flex sm:flex-col sm:items-end">
           <p className="font-bold text-sm text-foreground">
-            {isSi ? "පීඨාධිපතිතුමන් විසින් අනුමත කරන ලදී" : "Approved by Dean"}
+            Approved by Dean
           </p>
 
           <div className="space-y-1 sm:w-full sm:flex sm:flex-col sm:items-end">
@@ -110,7 +105,7 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
               {canEdit ? (
                 <input
                   type="text"
-                  placeholder={isSi ? "පීඨාධිපති නම..." : "Type Dean name..."}
+                  placeholder="Type Dean name..."
                   value={dean}
                   onChange={(e) => handleDeanChange(e.target.value)}
                   className="w-full max-w-xs text-sm border-b border-input focus:border-foreground bg-transparent py-1 text-foreground placeholder:text-muted-foreground/60 outline-hidden font-medium sm:text-right"
@@ -129,12 +124,8 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
 
           <div className="pt-6 space-y-1.5 sm:flex sm:flex-col sm:items-end">
             <div className="border-b border-dashed border-foreground/60 w-52 sm:w-60" />
-            <p className="text-xs text-muted-foreground">
-              {isSi ? "අත්සන / Signature" : "Signature"}
-            </p>
-            <p className="text-xs text-muted-foreground pt-1">
-              {isSi ? "දිනය / Date: ........................" : "Date: ........................"}
-            </p>
+            <p className="text-xs text-muted-foreground">Signature</p>
+            <p className="text-xs text-muted-foreground pt-1">Date: ........................</p>
           </div>
         </div>
       </div>
@@ -142,7 +133,7 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
       {/* Lower Row: Prepared by Junior Treasurer */}
       <div className="max-w-md space-y-3">
         <p className="font-bold text-sm text-foreground">
-          {isSi ? "කණිෂ්ඨ භාණ්ඩාගාරික විසින් පිළියෙල කරන ලදී" : "Prepared by Junior Treasurer"}
+          Prepared by Junior Treasurer
         </p>
 
         <div className="space-y-1">
@@ -151,7 +142,7 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
             {canEdit ? (
               <input
                 type="text"
-                placeholder={isSi ? "නම ඇතුළත් කරන්න..." : "Type Junior Treasurer name..."}
+                placeholder="Type Junior Treasurer name..."
                 value={juniorTreasurer}
                 onChange={(e) => handleJuniorChange(e.target.value)}
                 className="w-full max-w-xs text-sm border-b border-input focus:border-foreground bg-transparent py-1 text-foreground placeholder:text-muted-foreground/60 outline-hidden font-medium"
@@ -170,12 +161,8 @@ export function ReportSignatures({ locale }: ReportSignaturesProps) {
 
         <div className="pt-6 space-y-1.5">
           <div className="border-b border-dashed border-foreground/60 w-52 sm:w-60" />
-          <p className="text-xs text-muted-foreground">
-            {isSi ? "අත්සන / Signature" : "Signature"}
-          </p>
-          <p className="text-xs text-muted-foreground pt-1">
-            {isSi ? "දිනය / Date: ........................" : "Date: ........................"}
-          </p>
+          <p className="text-xs text-muted-foreground">Signature</p>
+          <p className="text-xs text-muted-foreground pt-1">Date: ........................</p>
         </div>
       </div>
     </div>

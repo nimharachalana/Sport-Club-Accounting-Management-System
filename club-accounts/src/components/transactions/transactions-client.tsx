@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
@@ -39,7 +39,6 @@ export function TransactionsClient({
   isAdmin,
 }: TransactionsClientProps) {
   const router = useRouter()
-  const locale = useLocale()
   const t = useTranslations("Transactions")
   const tCommon = useTranslations("Common")
 
@@ -94,8 +93,7 @@ export function TransactionsClient({
         const billMatch = tx.bill_no?.toLowerCase().includes(query)
         const noteMatch = tx.note?.toLowerCase().includes(query)
         const categoryEn = tx.category?.name_en?.toLowerCase() || ""
-        const categorySi = tx.category?.name_si?.toLowerCase() || ""
-        const categoryMatch = categoryEn.includes(query) || categorySi.includes(query)
+        const categoryMatch = categoryEn.includes(query)
         if (!partyMatch && !billMatch && !noteMatch && !categoryMatch) {
           return false
         }
@@ -305,7 +303,7 @@ export function TransactionsClient({
               </option>
               {categories.map((c) => (
                 <option key={c.id} value={c.id} className="bg-popover text-popover-foreground">
-                  {locale === "si" && c.name_si ? c.name_si : c.name_en}
+                  {c.name_en}
                 </option>
               ))}
             </select>
@@ -329,21 +327,21 @@ export function TransactionsClient({
           </div>
 
           {/* Date range & Reset row */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t text-xs">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground font-medium">{t("dates")}:</span>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t text-xs">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-muted-foreground font-medium shrink-0">{t("dates")}:</span>
               <Input
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="h-7 text-xs w-36"
+                className="h-8 text-xs w-32 sm:w-36"
               />
               <span className="text-muted-foreground">{t("to")}</span>
               <Input
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="h-7 text-xs w-36"
+                className="h-8 text-xs w-32 sm:w-36"
               />
             </div>
 
@@ -352,9 +350,9 @@ export function TransactionsClient({
                 variant="ghost"
                 size="sm"
                 onClick={handleResetFilters}
-                className="h-7 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                className="h-8 text-xs text-muted-foreground hover:text-foreground cursor-pointer self-start sm:self-auto"
               >
-                <RotateCcw className="h-3 w-3 mr-1" />
+                <RotateCcw className="h-3.5 w-3.5 mr-1" />
                 {t("resetFilters")} ({filteredTransactions.length} of {initialTransactions.length})
               </Button>
             )}
@@ -362,8 +360,125 @@ export function TransactionsClient({
         </CardContent>
       </Card>
 
-      {/* Transactions Table */}
-      <div className="rounded-xl border bg-card overflow-hidden shadow-xs">
+      {/* Mobile Transaction Cards Stream (Phones) */}
+      <div className="sm:hidden space-y-3">
+        {filteredTransactions.length === 0 ? (
+          <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">
+            <FileSpreadsheet className="h-8 w-8 mx-auto mb-2 opacity-40" />
+            <p className="font-medium text-sm">{t("noTransactionsFound")}</p>
+            <p className="text-xs mt-1">
+              {hasActiveFilters ? t("tryClearingFilters") : t("clickToAddFirst")}
+            </p>
+          </div>
+        ) : (
+          filteredTransactions.map((tx) => {
+            const isIncome = tx.type === "income"
+            const hasPhotos = tx.photos && tx.photos.length > 0
+
+            return (
+              <div
+                key={tx.id}
+                onClick={() => handleOpenDetail(tx)}
+                className="rounded-xl border bg-card p-3.5 space-y-2.5 shadow-xs hover:border-emerald-500/30 transition-all cursor-pointer"
+              >
+                {/* Header row: Date + Type Pill + Method */}
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium text-muted-foreground">{tx.tx_date}</span>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                        isIncome
+                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                          : "bg-rose-500/10 text-rose-600 dark:text-rose-400"
+                      }`}
+                    >
+                      {isIncome ? <ArrowDownLeft className="h-3 w-3" /> : <ArrowUpRight className="h-3 w-3" />}
+                      {isIncome ? t("income") : t("expense")}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-muted-foreground text-[11px]">
+                    {tx.method === "bank" ? <Landmark className="h-3 w-3" /> : <Wallet className="h-3 w-3" />}
+                    <span>{tx.method === "bank" ? t("bank") : t("cash")}</span>
+                    {hasPhotos && (
+                      <span className="ml-1 text-primary">
+                        <Paperclip className="h-3 w-3" />
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* Middle row: Category + Payee */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-sm text-foreground truncate">
+                      {tx.category?.name_en || "General"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate mt-0.5">
+                      {tx.party || "—"}
+                      {tx.bill_no && (
+                        <span className="ml-1.5 text-[10px] bg-muted px-1.5 py-0.2 rounded font-mono">
+                          #{tx.bill_no}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  {/* Amount in bold */}
+                  <div
+                    className={`text-sm font-bold tabular-nums shrink-0 ${
+                      isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
+                    }`}
+                  >
+                    {isIncome ? "+" : "−"} {fmt(tx.amount)}
+                  </div>
+                </div>
+
+                {/* Action buttons on bottom row */}
+                <div
+                  className="flex items-center justify-end gap-1 pt-2 border-t"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleOpenDetail(tx)}
+                    className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <Eye className="h-3.5 w-3.5 mr-1" />
+                    <span>View</span>
+                  </Button>
+                  {isAdmin && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenEdit(tx)}
+                        className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground cursor-pointer"
+                      >
+                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                        <span>Edit</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenDelete(tx)}
+                        className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 cursor-pointer"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        <span>Delete</span>
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      {/* Desktop & Tablet Transactions Table */}
+      <div className="hidden sm:block rounded-xl border bg-card overflow-hidden shadow-xs">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="bg-muted/50 border-b text-xs font-semibold uppercase text-muted-foreground tracking-wider">
@@ -428,9 +543,7 @@ export function TransactionsClient({
                       {/* Category */}
                       <td className="py-3 px-4 whitespace-nowrap">
                         <div className="font-medium text-xs">
-                          {locale === "si" && tx.category?.name_si
-                            ? tx.category.name_si
-                            : tx.category?.name_en || "General"}
+                          {tx.category?.name_en || "General"}
                         </div>
                       </td>
 

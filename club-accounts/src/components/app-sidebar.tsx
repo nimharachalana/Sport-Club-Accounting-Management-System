@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { useTheme } from "next-themes"
 import { createClient } from "@/lib/supabase/client"
 import Image from "next/image"
@@ -16,7 +16,6 @@ import {
   Settings,
   LogOut,
   ShieldCheck,
-  Languages,
   Plus,
   Menu,
   X,
@@ -42,7 +41,6 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const locale = useLocale()
   const t = useTranslations("Nav")
   const tTx = useTranslations("Transactions")
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -63,12 +61,6 @@ export function AppSidebar({
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push("/login")
-    router.refresh()
-  }
-
-  const toggleLocale = () => {
-    const nextLocale = locale === "si" ? "en" : "si"
-    document.cookie = `locale=${nextLocale};path=/;max-age=31536000;SameSite=Lax`
     router.refresh()
   }
 
@@ -196,23 +188,6 @@ export function AppSidebar({
           </span>
         </Button>
 
-        {/* Language Switcher */}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleLocale}
-          className="w-full justify-between h-8 px-2.5 rounded-lg border-emerald-500/20 text-xs font-medium hover:bg-emerald-500/10 hover:text-emerald-600 cursor-pointer"
-          title={locale === "si" ? "Switch to English" : "සිංහල භාෂාවට මාරු වන්න"}
-        >
-          <div className="flex items-center gap-2">
-            <Languages className="h-3.5 w-3.5 text-emerald-500" />
-            <span className="text-muted-foreground text-[11px]">Language:</span>
-          </div>
-          <span className={`font-semibold ${locale === "en" ? "font-sinhala" : ""}`}>
-            {locale === "en" ? "සිංහල" : "English"}
-          </span>
-        </Button>
-
         {/* User Profile Badge */}
         <div className="flex items-center justify-between p-2 rounded-xl bg-muted/40 border">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -299,19 +274,11 @@ export function AppSidebar({
           </Button>
 
           <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleLocale}
-            className="h-8 px-2 text-xs"
-          >
-            {locale === "en" ? "සිං" : "EN"}
-          </Button>
-
-          <Button
             variant="ghost"
             size="icon-sm"
             onClick={() => setMobileOpen(true)}
-            className="h-8 w-8"
+            className="h-8 w-8 cursor-pointer"
+            aria-label="Open Navigation Menu"
           >
             <Menu className="h-5 w-5" />
           </Button>

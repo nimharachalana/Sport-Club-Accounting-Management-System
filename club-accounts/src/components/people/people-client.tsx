@@ -179,119 +179,213 @@ export function PeopleClient({
         </div>
       </div>
 
-      {/* People Table */}
-      <div className="rounded-xl border bg-card shadow-xs overflow-hidden">
-        <Table>
-          <TableHeader className="bg-muted/40">
-            <TableRow>
-              <TableHead className="w-[300px]">{t("name")}</TableHead>
-              <TableHead>{t("email")}</TableHead>
-              <TableHead>{t("role")}</TableHead>
-              <TableHead>{t("joined")}</TableHead>
-              <TableHead className="text-right">{t("actions")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredPeople.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={5}
-                  className="h-32 text-center text-muted-foreground"
-                >
-                  <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
-                  <p>{t("noPeopleFound")}</p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredPeople.map((person) => {
-                const isCurrent = person.id === currentUserId
-                const isPersonAdmin = person.role === "admin"
-                const initials = getInitials(person.fullName, person.email)
+      {/* Mobile Card Stream (Phones) */}
+      <div className="md:hidden space-y-3">
+        {filteredPeople.length === 0 ? (
+          <div className="rounded-xl border bg-card p-8 text-center text-muted-foreground">
+            <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
+            <p className="text-sm font-medium">{t("noPeopleFound")}</p>
+          </div>
+        ) : (
+          filteredPeople.map((person) => {
+            const isCurrent = person.id === currentUserId
+            const isPersonAdmin = person.role === "admin"
+            const initials = getInitials(person.fullName, person.email)
 
-                return (
-                  <TableRow key={person.id} className="hover:bg-muted/40">
-                    {/* Name + Avatar */}
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 select-none ${
-                            isPersonAdmin
-                              ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20"
-                              : "bg-blue-500/15 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500/20"
-                          }`}
-                        >
-                          {initials}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-medium text-foreground truncate">
-                            {person.fullName || person.email.split("@")[0]}
-                          </p>
-                          {isCurrent && (
-                            <span className="inline-block text-[10px] font-semibold tracking-wide uppercase px-1.5 py-0.2 rounded bg-primary/10 text-primary">
-                              {t("currentAccount")}
-                            </span>
-                          )}
-                        </div>
+            return (
+              <div
+                key={person.id}
+                className="rounded-xl border bg-card p-4 space-y-3 shadow-xs hover:border-emerald-500/30 transition-all"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div
+                      className={`h-10 w-10 rounded-full flex items-center justify-center text-xs font-bold shrink-0 select-none ${
+                        isPersonAdmin
+                          ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20"
+                          : "bg-blue-500/15 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500/20"
+                      }`}
+                    >
+                      {initials}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <p className="font-semibold text-sm text-foreground truncate">
+                          {person.fullName || person.email.split("@")[0]}
+                        </p>
+                        {isCurrent && (
+                          <span className="text-[10px] font-bold uppercase px-1.5 py-0.2 rounded bg-primary/10 text-primary">
+                            {t("currentAccount")}
+                          </span>
+                        )}
                       </div>
-                    </TableCell>
+                      <p className="font-mono text-xs text-muted-foreground truncate mt-0.5">
+                        {person.email}
+                      </p>
+                    </div>
+                  </div>
 
-                    {/* Email */}
-                    <TableCell className="font-mono text-xs text-muted-foreground">
-                      {person.email}
-                    </TableCell>
+                  {/* Role Badge */}
+                  <div>
+                    {isPersonAdmin ? (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                        <ShieldCheck className="h-3 w-3" />
+                        <span>Admin</span>
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                        <Eye className="h-3 w-3" />
+                        <span>Viewer</span>
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-                    {/* Role */}
-                    <TableCell>
-                      {isPersonAdmin ? (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
-                          <ShieldCheck className="h-3.5 w-3.5" />
-                          <span>Admin</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
-                          <Eye className="h-3.5 w-3.5" />
-                          <span>Viewer</span>
-                        </span>
-                      )}
-                    </TableCell>
+                <div className="flex items-center justify-between pt-2 border-t text-xs text-muted-foreground">
+                  <span>Joined {formatDate(person.createdAt)}</span>
+                  <div>
+                    {isCurrent ? (
+                      <span className="italic text-muted-foreground">—</span>
+                    ) : isPersonAdmin ? (
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded bg-muted">
+                        {t("protected")}
+                      </span>
+                    ) : isAdmin ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPersonToRemove(person)}
+                        className="h-7 px-2 text-xs text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1" />
+                        <span>{t("remove")}</span>
+                      </Button>
+                    ) : (
+                      <span className="italic text-muted-foreground">—</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )
+          })
+        )}
+      </div>
 
-                    {/* Joined Date */}
-                    <TableCell className="text-xs text-muted-foreground">
-                      {formatDate(person.createdAt)}
-                    </TableCell>
+      {/* Desktop & Tablet Table */}
+      <div className="hidden md:block rounded-xl border bg-card shadow-xs overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader className="bg-muted/40">
+              <TableRow>
+                <TableHead className="w-[300px]">{t("name")}</TableHead>
+                <TableHead>{t("email")}</TableHead>
+                <TableHead>{t("role")}</TableHead>
+                <TableHead>{t("joined")}</TableHead>
+                <TableHead className="text-right">{t("actions")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPeople.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={5}
+                    className="h-32 text-center text-muted-foreground"
+                  >
+                    <Users className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                    <p>{t("noPeopleFound")}</p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredPeople.map((person) => {
+                  const isCurrent = person.id === currentUserId
+                  const isPersonAdmin = person.role === "admin"
+                  const initials = getInitials(person.fullName, person.email)
 
-                    {/* Actions */}
-                    <TableCell className="text-right">
-                      {isCurrent ? (
-                        <span className="text-xs text-muted-foreground italic px-2">
-                          —
-                        </span>
-                      ) : isPersonAdmin ? (
-                        <span className="text-xs text-muted-foreground font-medium px-2 py-0.5 rounded bg-muted">
-                          {t("protected")}
-                        </span>
-                      ) : isAdmin ? (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setPersonToRemove(person)}
-                          className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <Trash2 className="h-3.5 w-3.5 mr-1" />
-                          <span>{t("remove")}</span>
-                        </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground px-2">
-                          —
-                        </span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
+                  return (
+                    <TableRow key={person.id} className="hover:bg-muted/40">
+                      {/* Name + Avatar */}
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <div
+                            className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 select-none ${
+                              isPersonAdmin
+                                ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 ring-1 ring-emerald-500/20"
+                                : "bg-blue-500/15 text-blue-700 dark:text-blue-300 ring-1 ring-blue-500/20"
+                            }`}
+                          >
+                            {initials}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-foreground truncate">
+                              {person.fullName || person.email.split("@")[0]}
+                            </p>
+                            {isCurrent && (
+                              <span className="inline-block text-[10px] font-semibold tracking-wide uppercase px-1.5 py-0.2 rounded bg-primary/10 text-primary">
+                                {t("currentAccount")}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* Email */}
+                      <TableCell className="font-mono text-xs text-muted-foreground">
+                        {person.email}
+                      </TableCell>
+
+                      {/* Role */}
+                      <TableCell>
+                        {isPersonAdmin ? (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20">
+                            <ShieldCheck className="h-3.5 w-3.5" />
+                            <span>Admin</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                            <Eye className="h-3.5 w-3.5" />
+                            <span>Viewer</span>
+                          </span>
+                        )}
+                      </TableCell>
+
+                      {/* Joined Date */}
+                      <TableCell className="text-xs text-muted-foreground">
+                        {formatDate(person.createdAt)}
+                      </TableCell>
+
+                      {/* Actions */}
+                      <TableCell className="text-right">
+                        {isCurrent ? (
+                          <span className="text-xs text-muted-foreground italic px-2">
+                            —
+                          </span>
+                        ) : isPersonAdmin ? (
+                          <span className="text-xs text-muted-foreground font-medium px-2 py-0.5 rounded bg-muted">
+                            {t("protected")}
+                          </span>
+                        ) : isAdmin ? (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setPersonToRemove(person)}
+                            className="h-8 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                            <span>{t("remove")}</span>
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground px-2">
+                            —
+                          </span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       {/* Add Viewer Modal Dialog */}

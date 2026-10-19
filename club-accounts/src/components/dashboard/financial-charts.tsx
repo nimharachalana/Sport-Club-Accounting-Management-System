@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { fmt } from "@/lib/money"
 import {
@@ -35,7 +35,6 @@ const CATEGORY_COLORS = [
 ]
 
 export function FinancialCharts({ transactions }: FinancialChartsProps) {
-  const locale = useLocale()
   const t = useTranslations("Dashboard")
   const tTx = useTranslations("Transactions")
 
@@ -78,10 +77,7 @@ export function FinancialCharts({ transactions }: FinancialChartsProps) {
     transactions
       .filter((tx) => tx.type === "expense")
       .forEach((tx) => {
-        const catName =
-          locale === "si" && tx.category?.name_si
-            ? tx.category.name_si
-            : tx.category?.name_en || "General"
+        const catName = tx.category?.name_en || "General"
 
         const current = map.get(catName) || { name: catName, total: 0 }
         current.total += tx.amount
@@ -94,7 +90,7 @@ export function FinancialCharts({ transactions }: FinancialChartsProps) {
         value: item.total,
       }))
       .sort((a, b) => b.value - a.value)
-  }, [transactions, locale])
+  }, [transactions])
 
   const hasCashFlowData = cashFlowData.length > 0
   const hasCategoryData = categoryData.length > 0

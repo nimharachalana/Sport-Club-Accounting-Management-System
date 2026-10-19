@@ -2,18 +2,17 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { createClient } from "@/lib/supabase/client"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import Image from "next/image"
-import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle, Languages } from "lucide-react"
+import { Mail, Lock, Eye, EyeOff, Loader2, AlertCircle } from "lucide-react"
 
 export default function LoginPage() {
   const router = useRouter()
-  const locale = useLocale()
   const t = useTranslations("Auth")
 
   const [email, setEmail] = useState("")
@@ -22,11 +21,6 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
-  const toggleLocale = () => {
-    const nextLocale = locale === "si" ? "en" : "si"
-    document.cookie = `locale=${nextLocale};path=/;max-age=31536000;SameSite=Lax`
-    router.refresh()
-  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,21 +57,6 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-4 bg-muted/30 relative">
-      {/* Language Switcher in Top Right */}
-      <div className="absolute top-4 right-4">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={toggleLocale}
-          className="h-8 px-2.5 rounded-lg border-emerald-500/30 text-xs font-semibold hover:bg-emerald-500/10 hover:text-emerald-500 cursor-pointer"
-          title={locale === "si" ? "Switch to English" : "සිංහල භාෂාවට මාරු වන්න"}
-        >
-          <Languages className="h-3.5 w-3.5 mr-1 text-emerald-500" />
-          <span className={locale === "en" ? "font-sinhala font-medium" : ""}>
-            {locale === "en" ? "සිංහල" : "English"}
-          </span>
-        </Button>
-      </div>
 
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8 text-center space-y-2">

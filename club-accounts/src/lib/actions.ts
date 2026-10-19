@@ -418,6 +418,7 @@ export async function updateCategory(
   revalidatePath('/transactions')
   revalidatePath('/reports')
   revalidatePath('/reports/income-expenditure')
+  revalidatePath('/')
 }
 
 /**
@@ -471,5 +472,6 @@ export async function deleteCategory(id: string): Promise<void> {
   revalidatePath('/transactions')
   revalidatePath('/reports')
   revalidatePath('/reports/income-expenditure')
+  revalidatePath('/')
 }
 

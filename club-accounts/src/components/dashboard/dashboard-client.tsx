@@ -69,10 +69,10 @@ export function DashboardClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tabular-nums text-foreground">
+            <div className="text-xl sm:text-2xl font-bold tabular-nums text-foreground truncate">
               {fmt(closingCash, currency)}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1 truncate">
               {t("openingCash")}: {fmt(openingCash, currency)}
             </p>
           </CardContent>
@@ -89,10 +89,10 @@ export function DashboardClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tabular-nums text-foreground">
+            <div className="text-xl sm:text-2xl font-bold tabular-nums text-foreground truncate">
               {fmt(closingBank, currency)}
             </div>
-            <p className="text-[11px] text-muted-foreground mt-1">
+            <p className="text-[11px] text-muted-foreground mt-1 truncate">
               {t("openingBank")}: {fmt(openingBank, currency)}
             </p>
           </CardContent>
@@ -109,10 +109,10 @@ export function DashboardClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">
+            <div className="text-xl sm:text-2xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400 truncate">
               {fmt(totalIncome, currency)}
             </div>
-            <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/70 mt-1">
+            <p className="text-[11px] text-emerald-700/70 dark:text-emerald-300/70 mt-1 truncate">
               {t("currentPeriodIncome")}
             </p>
           </CardContent>
@@ -129,10 +129,10 @@ export function DashboardClient({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold tabular-nums text-rose-600 dark:text-rose-400">
+            <div className="text-xl sm:text-2xl font-bold tabular-nums text-rose-600 dark:text-rose-400 truncate">
               {fmt(totalExpense, currency)}
             </div>
-            <p className="text-[11px] text-rose-700/70 dark:text-rose-300/70 mt-1">
+            <p className="text-[11px] text-rose-700/70 dark:text-rose-300/70 mt-1 truncate">
               {t("currentPeriodExpenses")}
             </p>
           </CardContent>
