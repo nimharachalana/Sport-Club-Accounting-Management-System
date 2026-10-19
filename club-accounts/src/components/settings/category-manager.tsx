@@ -44,13 +44,11 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
   // New Category state
   const [showAddForm, setShowAddForm] = useState(false)
   const [newEn, setNewEn] = useState("")
-  const [newSi, setNewSi] = useState("")
   const [isAdding, setIsAdding] = useState(false)
 
   // Edit Category state
   const [editingCategory, setEditingCategory] = useState<Category | null>(null)
   const [editEn, setEditEn] = useState("")
-  const [editSi, setEditSi] = useState("")
   const [isEditing, setIsEditing] = useState(false)
 
   // Delete Category state
@@ -60,7 +58,7 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
     if (c.type !== activeTab) return false
     if (!search.trim()) return true
     const q = search.toLowerCase()
-    return c.name_en.toLowerCase().includes(q) || (c.name_si && c.name_si.toLowerCase().includes(q))
+    return c.name_en.toLowerCase().includes(q)
   })
 
   // Handle Add Category
@@ -76,11 +74,10 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
       const created = await createCategory({
         type: activeTab,
         name_en: newEn.trim(),
-        name_si: newSi.trim() || newEn.trim(),
+        name_si: newEn.trim(),
       })
       setCategories((prev) => [...prev, created])
       setNewEn("")
-      setNewSi("")
       setShowAddForm(false)
       toast.success(`Category "${created.name_en}" created successfully!`)
     } catch (err: unknown) {
@@ -95,7 +92,6 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
   const handleOpenEdit = (c: Category) => {
     setEditingCategory(c)
     setEditEn(c.name_en)
-    setEditSi(c.name_si || "")
   }
 
   const handleSaveEdit = async () => {
@@ -104,12 +100,12 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
     try {
       await updateCategory(editingCategory.id, {
         name_en: editEn.trim(),
-        name_si: editSi.trim() || editEn.trim(),
+        name_si: editEn.trim(),
       })
       setCategories((prev) =>
         prev.map((c) =>
           c.id === editingCategory.id
-            ? { ...c, name_en: editEn.trim(), name_si: editSi.trim() || editEn.trim() }
+            ? { ...c, name_en: editEn.trim(), name_si: editEn.trim() }
             : c
         )
       )
@@ -234,33 +230,18 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
               </button>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="newEn" className="text-xs font-semibold">
-                  English Name *
-                </Label>
-                <Input
-                  id="newEn"
-                  value={newEn}
-                  onChange={(e) => setNewEn(e.target.value)}
-                  placeholder="e.g. Ticket Sales, Food Stall, Equipment"
-                  className="h-8 text-xs font-medium"
-                  autoFocus
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="newSi" className="text-xs font-semibold">
-                  Sinhala Name (සිංහල)
-                </Label>
-                <Input
-                  id="newSi"
-                  value={newSi}
-                  onChange={(e) => setNewSi(e.target.value)}
-                  placeholder="e.g. ප්‍රවේශපත්‍ර, උපකරණ"
-                  className="h-8 text-xs font-medium"
-                />
-              </div>
+            <div className="space-y-1">
+              <Label htmlFor="newEn" className="text-xs font-semibold">
+                Category Name *
+              </Label>
+              <Input
+                id="newEn"
+                value={newEn}
+                onChange={(e) => setNewEn(e.target.value)}
+                placeholder="e.g. Ticket Sales, Food Stall, Equipment, Ground Maintenance"
+                className="h-8 text-xs font-medium"
+                autoFocus
+              />
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-1">
@@ -300,8 +281,7 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
           <table className="w-full text-xs text-left border-collapse">
             <thead>
               <tr className="bg-muted/50 border-b text-muted-foreground uppercase font-bold text-[11px]">
-                <th className="py-2.5 px-4 font-semibold">Category Name (English)</th>
-                <th className="py-2.5 px-4 font-semibold">Category Name (Sinhala)</th>
+                <th className="py-2.5 px-4 font-semibold">Category Name</th>
                 <th className="py-2.5 px-4 font-semibold w-28">Type</th>
                 {isAdmin && <th className="py-2.5 px-4 text-right w-24 font-semibold">Actions</th>}
               </tr>
@@ -309,7 +289,7 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
             <tbody className="divide-y divide-border">
               {filteredCategories.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 4 : 3} className="py-6 text-center text-muted-foreground italic">
+                  <td colSpan={isAdmin ? 3 : 2} className="py-6 text-center text-muted-foreground italic">
                     No categories found.
                   </td>
                 </tr>
@@ -317,9 +297,6 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
                 filteredCategories.map((c) => (
                   <tr key={c.id} className="hover:bg-muted/30 transition-colors">
                     <td className="py-2.5 px-4 font-semibold text-foreground">{c.name_en}</td>
-                    <td className="py-2.5 px-4 text-muted-foreground font-medium">
-                      {c.name_si ? c.name_si : "—"}
-                    </td>
                     <td className="py-2.5 px-4">
                       <span
                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
@@ -373,14 +350,14 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
             <DialogHeader>
               <DialogTitle>Edit Category</DialogTitle>
               <DialogDescription>
-                Update the English and Sinhala names for &ldquo;{editingCategory.name_en}&rdquo;.
+                Update the category name for &ldquo;{editingCategory.name_en}&rdquo;.
               </DialogDescription>
             </DialogHeader>
 
             <div className="space-y-3 py-2">
               <div className="space-y-1">
                 <Label htmlFor="editEn" className="text-xs font-semibold">
-                  English Name *
+                  Category Name *
                 </Label>
                 <Input
                   id="editEn"
@@ -388,18 +365,6 @@ export function CategoryManager({ initialCategories, isAdmin }: CategoryManagerP
                   onChange={(e) => setEditEn(e.target.value)}
                   className="font-medium text-sm"
                   autoFocus
-                />
-              </div>
-
-              <div className="space-y-1">
-                <Label htmlFor="editSi" className="text-xs font-semibold">
-                  Sinhala Name (සිංහල)
-                </Label>
-                <Input
-                  id="editSi"
-                  value={editSi}
-                  onChange={(e) => setEditSi(e.target.value)}
-                  className="font-medium text-sm"
                 />
               </div>
             </div>

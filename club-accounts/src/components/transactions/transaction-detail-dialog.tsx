@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import {
   Dialog,
   DialogContent,
@@ -43,7 +43,6 @@ export function TransactionDetailDialog({
   onEdit,
   isAdmin = false,
 }: TransactionDetailDialogProps) {
-  const locale = useLocale()
   const t = useTranslations("Transactions")
   const tCommon = useTranslations("Common")
   const [signedUrls, setSignedUrls] = useState<Record<string, string>>({})
@@ -148,9 +147,7 @@ export function TransactionDetailDialog({
             </div>
             <div className="font-medium text-right">
               <div>
-                {locale === "si" && transaction.category?.name_si
-                  ? transaction.category.name_si
-                  : transaction.category?.name_en || "General"}
+                {transaction.category?.name_en || "General"}
               </div>
             </div>
           </div>

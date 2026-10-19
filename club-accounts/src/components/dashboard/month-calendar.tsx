@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { fmt } from "@/lib/money"
@@ -33,13 +33,11 @@ interface MonthCalendarProps {
 }
 
 const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
-const WEEKDAYS_SI = ["ඉරි", "සඳු", "අඟ", "බදා", "බ්‍රහ", "සිකු", "සෙන"]
 
 export function MonthCalendar({
   transactions,
   onSelectTransaction,
 }: MonthCalendarProps) {
-  const locale = useLocale()
   const t = useTranslations("Dashboard")
   const tTx = useTranslations("Transactions")
 
@@ -89,7 +87,7 @@ export function MonthCalendar({
     setSelectedDateStr(format(today, "yyyy-MM-dd"))
   }
 
-  const weekdaysList = locale === "si" ? WEEKDAYS_SI : WEEKDAYS
+  const weekdaysList = WEEKDAYS
 
   return (
     <Card className="rounded-2xl border bg-card/60 backdrop-blur-xs shadow-xs flex flex-col h-full">
@@ -228,10 +226,7 @@ export function MonthCalendar({
             <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
               {selectedDayData.items.map((tx) => {
                 const isIncome = tx.type === "income"
-                const catName =
-                  locale === "si" && tx.category?.name_si
-                    ? tx.category.name_si
-                    : tx.category?.name_en || "General"
+                const catName = tx.category?.name_en || "General"
 
                 return (
                   <div

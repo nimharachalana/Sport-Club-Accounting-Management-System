@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useLocale, useTranslations } from "next-intl"
+import { useTranslations } from "next-intl"
 import imageCompression from "browser-image-compression"
 import {
   Dialog,
@@ -18,11 +18,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { transactionSchema, type TransactionFormValues } from "@/lib/validations/transaction"
-import { createTransaction, updateTransaction, createCategory } from "@/lib/actions"
+import { createTransaction, updateTransaction, createCategory, updateCategory, deleteCategory } from "@/lib/actions"
 import { toCents, fmt } from "@/lib/money"
 import { createClient } from "@/lib/supabase/client"
 import { toast } from "sonner"
-import { Loader2, Upload, Trash2, ArrowDownLeft, ArrowUpRight, Wallet, Landmark, Image as ImageIcon, Plus, X } from "lucide-react"
+import { Loader2, Upload, Trash2, ArrowDownLeft, ArrowUpRight, Wallet, Landmark, Image as ImageIcon, Plus, X, Pencil, Settings2, AlertCircle, Search } from "lucide-react"
 import type { Category, Transaction } from "./types"
 
 interface TransactionFormDialogProps {
@@ -41,7 +41,6 @@ export function TransactionFormDialog({
   onSuccess,
 }: TransactionFormDialogProps) {
   const isEditing = Boolean(transactionToEdit)
-  const locale = useLocale()
   const t = useTranslations("Transactions")
   const tCommon = useTranslations("Common")
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -54,8 +53,14 @@ export function TransactionFormDialog({
   const [localCategories, setLocalCategories] = useState<Category[]>(categories)
   const [showNewCategory, setShowNewCategory] = useState(false)
   const [newCatNameEn, setNewCatNameEn] = useState("")
-  const [newCatNameSi, setNewCatNameSi] = useState("")
   const [isCreatingCat, setIsCreatingCat] = useState(false)
+  const [showManageCategories, setShowManageCategories] = useState(false)
+  const [categorySearch, setCategorySearch] = useState("")
+  const [editingCat, setEditingCat] = useState<Category | null>(null)
+  const [editCatNameEn, setEditCatNameEn] = useState("")
+  const [isUpdatingCat, setIsUpdatingCat] = useState(false)
+  const [deletingCat, setDeletingCat] = useState<Category | null>(null)
+  const [isDeletingCat, setIsDeletingCat] = useState(false)
 
   const todayStr = new Date().toISOString().split("T")[0]
 
@@ -85,10 +90,23 @@ export function TransactionFormDialog({
   const currentAmount = watch("amount")
 
   useEffect(() => {
-    setLocalCategories(categories)
+    setLocalCategories((prev) => {
+      const map = new Map<string, Category>()
+      for (const c of categories) {
+        map.set(c.id, c)
+      }
+      for (const c of prev) {
+        if (!map.has(c.id)) {
+          map.set(c.id, c)
+        }
+      }
+      return Array.from(map.values())
+    })
   }, [categories])
 
   const filteredCategories = localCategories.filter((c) => c.type === currentType)
+  const currentCategoryId = watch("category_id")
+  const selectedCategory = filteredCategories.find((c) => c.id === currentCategoryId)
 
   useEffect(() => {
     if (open) {
@@ -123,7 +141,11 @@ export function TransactionFormDialog({
       setUploadStatus(null)
       setShowNewCategory(false)
       setNewCatNameEn("")
-      setNewCatNameSi("")
+      setShowManageCategories(false)
+      setCategorySearch("")
+      setEditingCat(null)
+      setEditCatNameEn("")
+      setDeletingCat(null)
     }
     // Only re-initialize when the modal opens or transactionToEdit changes.
     // Do NOT include localCategories so adding a category never wipes user-entered data!
@@ -148,12 +170,18 @@ export function TransactionFormDialog({
       const created = await createCategory({
         type: currentType,
         name_en: newCatNameEn.trim(),
-        name_si: newCatNameSi.trim() || newCatNameEn.trim(),
+        name_si: newCatNameEn.trim(),
       })
-      setLocalCategories((prev) => [...prev, created])
-      setValue("category_id", created.id)
+      setLocalCategories((prev) => {
+        if (prev.some((c) => c.id === created.id)) return prev
+        return [...prev, created]
+      })
+      setValue("category_id", created.id, {
+        shouldValidate: true,
+        shouldDirty: true,
+        shouldTouch: true,
+      })
       setNewCatNameEn("")
-      setNewCatNameSi("")
       setShowNewCategory(false)
       toast.success(t("createCategorySuccess"))
     } catch (err: unknown) {
@@ -161,6 +189,54 @@ export function TransactionFormDialog({
       toast.error(msg)
     } finally {
       setIsCreatingCat(false)
+    }
+  }
+
+  const handleSaveEditCategory = async () => {
+    if (!editingCat || !editCatNameEn.trim()) {
+      toast.error("Please enter a category name")
+      return
+    }
+    setIsUpdatingCat(true)
+    try {
+      await updateCategory(editingCat.id, {
+        name_en: editCatNameEn.trim(),
+        name_si: editCatNameEn.trim(),
+      })
+      setLocalCategories((prev) =>
+        prev.map((c) =>
+          c.id === editingCat.id
+            ? { ...c, name_en: editCatNameEn.trim(), name_si: editCatNameEn.trim() }
+            : c
+        )
+      )
+      toast.success(`Category renamed to "${editCatNameEn.trim()}"`)
+      setEditingCat(null)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to update category"
+      toast.error(msg)
+    } finally {
+      setIsUpdatingCat(false)
+    }
+  }
+
+  const handleConfirmDeleteCategory = async () => {
+    if (!deletingCat) return
+    setIsDeletingCat(true)
+    try {
+      await deleteCategory(deletingCat.id)
+      setLocalCategories((prev) => prev.filter((c) => c.id !== deletingCat.id))
+      if (watch("category_id") === deletingCat.id) {
+        const remaining = filteredCategories.filter((c) => c.id !== deletingCat.id)
+        setValue("category_id", remaining.length > 0 ? remaining[0].id : "")
+      }
+      toast.success(`Category "${deletingCat.name_en}" deleted`)
+      setDeletingCat(null)
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete category"
+      toast.error(msg)
+    } finally {
+      setIsDeletingCat(false)
     }
   }
 
@@ -368,15 +444,126 @@ export function TransactionFormDialog({
           <div className="space-y-1.5">
             <div className="flex items-center justify-between">
               <Label htmlFor="category_id">{t("category")}</Label>
-              <button
-                type="button"
-                onClick={() => setShowNewCategory((prev) => !prev)}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>{t("addNewCategory")}</span>
-              </button>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowManageCategories((prev) => !prev)
+                    setShowNewCategory(false)
+                    setEditingCat(null)
+                    setDeletingCat(null)
+                  }}
+                  className={`inline-flex items-center gap-1 text-xs font-medium cursor-pointer transition-colors ${
+                    showManageCategories
+                      ? "text-primary font-bold underline"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Manage all categories (search, rename, delete)"
+                >
+                  <Settings2 className="h-3.5 w-3.5" />
+                  <span>{showManageCategories ? "Close" : "Manage"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewCategory((prev) => !prev)
+                    setShowManageCategories(false)
+                    setEditingCat(null)
+                    setDeletingCat(null)
+                  }}
+                  className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline cursor-pointer"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  <span>{t("addNewCategory")}</span>
+                </button>
+              </div>
             </div>
+
+            {/* Manage Categories Panel */}
+            {showManageCategories && (
+              <div className="rounded-xl border border-border bg-muted/40 p-3 space-y-2.5 animate-in fade-in-50 duration-200">
+                <div className="flex items-center justify-between pb-1 border-b border-border">
+                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Settings2 className="h-3.5 w-3.5 text-primary" />
+                    Manage Categories ({currentType === "income" ? t("income") : t("expense")})
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setShowManageCategories(false)}
+                    className="text-muted-foreground hover:text-foreground text-xs cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                  <Input
+                    placeholder="Search category to edit or delete..."
+                    value={categorySearch}
+                    onChange={(e) => setCategorySearch(e.target.value)}
+                    className="h-7 text-xs pl-8 bg-background"
+                  />
+                </div>
+
+                <div className="max-h-44 overflow-y-auto space-y-1 pr-1 divide-y divide-border/40">
+                  {filteredCategories
+                    .filter(
+                      (c) =>
+                        !categorySearch.trim() ||
+                        c.name_en.toLowerCase().includes(categorySearch.toLowerCase())
+                    )
+                    .map((cat) => (
+                      <div
+                        key={cat.id}
+                        className="pt-1.5 pb-1 flex items-center justify-between gap-2 text-xs"
+                      >
+                        <span className="font-medium text-foreground truncate">{cat.name_en}</span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 hover:text-blue-600 cursor-pointer"
+                            title={`Rename "${cat.name_en}"`}
+                            onClick={() => {
+                              setEditingCat(cat)
+                              setEditCatNameEn(cat.name_en)
+                              setDeletingCat(null)
+                              setShowNewCategory(false)
+                            }}
+                          >
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0 hover:text-destructive text-destructive/80 cursor-pointer"
+                            title={`Delete "${cat.name_en}"`}
+                            onClick={() => {
+                              setDeletingCat(cat)
+                              setEditingCat(null)
+                              setShowNewCategory(false)
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  {filteredCategories.filter(
+                    (c) =>
+                      !categorySearch.trim() ||
+                      c.name_en.toLowerCase().includes(categorySearch.toLowerCase())
+                  ).length === 0 && (
+                    <div className="text-center text-xs text-muted-foreground py-2">
+                      No categories found.
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             {/* Inline New Category Creator Card */}
             {showNewCategory && (
@@ -394,27 +581,16 @@ export function TransactionFormDialog({
                   </button>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-muted-foreground">{t("categoryNameEn")}</Label>
-                    <Input
-                      placeholder={t("categoryNameEnPlaceholder")}
-                      value={newCatNameEn}
-                      onChange={(e) => setNewCatNameEn(e.target.value)}
-                      className="h-8 text-xs bg-background"
-                      disabled={isCreatingCat}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-[11px] text-muted-foreground">{t("categoryNameSi")}</Label>
-                    <Input
-                      placeholder={t("categoryNameSiPlaceholder")}
-                      value={newCatNameSi}
-                      onChange={(e) => setNewCatNameSi(e.target.value)}
-                      className="h-8 text-xs bg-background font-sinhala"
-                      disabled={isCreatingCat}
-                    />
-                  </div>
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">{t("categoryNameEn")}</Label>
+                  <Input
+                    placeholder={t("categoryNameEnPlaceholder")}
+                    value={newCatNameEn}
+                    onChange={(e) => setNewCatNameEn(e.target.value)}
+                    className="h-8 text-xs bg-background"
+                    disabled={isCreatingCat}
+                    autoFocus
+                  />
                 </div>
 
                 <div className="flex justify-end gap-2 pt-1">
@@ -448,21 +624,170 @@ export function TransactionFormDialog({
               </div>
             )}
 
-            <select
-              id="category_id"
-              {...register("category_id")}
-              disabled={isSubmitting}
-              className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <option value="" disabled className="bg-popover text-popover-foreground">
-                {t("selectCategoryPlaceholder")}
-              </option>
-              {filteredCategories.map((c) => (
-                <option key={c.id} value={c.id} className="bg-popover text-popover-foreground">
-                  {locale === "si" && c.name_si ? c.name_si : c.name_en}
+            {/* Inline Edit Category Card */}
+            {editingCat && (
+              <div className="rounded-xl border border-blue-500/30 bg-blue-500/5 p-3 space-y-2.5 animate-in fade-in-50 duration-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                    <Pencil className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    Rename Category: <span className="text-blue-600 dark:text-blue-400 font-semibold">{editingCat.name_en}</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setEditingCat(null)}
+                    className="text-muted-foreground hover:text-foreground text-xs cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] text-muted-foreground">New Category Name</Label>
+                  <Input
+                    value={editCatNameEn}
+                    onChange={(e) => setEditCatNameEn(e.target.value)}
+                    className="h-8 text-xs bg-background"
+                    disabled={isUpdatingCat}
+                    autoFocus
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditingCat(null)}
+                    disabled={isUpdatingCat}
+                    className="h-7 text-xs"
+                  >
+                    {tCommon("cancel")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleSaveEditCategory}
+                    disabled={isUpdatingCat || !editCatNameEn.trim()}
+                    className="h-7 text-xs bg-blue-600 hover:bg-blue-500 text-white cursor-pointer"
+                  >
+                    {isUpdatingCat ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        {tCommon("saving")}
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Inline Delete Category Confirmation Card */}
+            {deletingCat && (
+              <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 space-y-2.5 animate-in fade-in-50 duration-200">
+                <div className="flex items-center gap-2 text-destructive">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span className="text-xs font-bold">
+                    Delete Category &ldquo;{deletingCat.name_en}&rdquo;?
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  This will permanently delete this category. If any transactions already use this category, deletion will be blocked safely.
+                </p>
+                <div className="flex justify-end gap-2 pt-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setDeletingCat(null)}
+                    disabled={isDeletingCat}
+                    className="h-7 text-xs"
+                  >
+                    {tCommon("cancel")}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="destructive"
+                    onClick={handleConfirmDeleteCategory}
+                    disabled={isDeletingCat}
+                    className="h-7 text-xs cursor-pointer"
+                  >
+                    {isDeletingCat ? (
+                      <>
+                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                        Deleting...
+                      </>
+                    ) : (
+                      "Yes, Delete"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Dropdown row with quick Edit & Delete for selected category */}
+            <div className="flex items-center gap-1.5">
+              <select
+                id="category_id"
+                {...register("category_id")}
+                value={currentCategoryId || ""}
+                onChange={(e) => {
+                  setValue("category_id", e.target.value, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  })
+                }}
+                disabled={isSubmitting}
+                className="h-9 flex-1 min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              >
+                <option value="" disabled className="bg-popover text-popover-foreground">
+                  {t("selectCategoryPlaceholder")}
                 </option>
-              ))}
-            </select>
+                {filteredCategories.map((c) => (
+                  <option key={c.id} value={c.id} className="bg-popover text-popover-foreground">
+                    {c.name_en}
+                  </option>
+                ))}
+              </select>
+
+              {selectedCategory && (
+                <div className="flex items-center gap-1 shrink-0">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 px-2.5 text-xs gap-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                    title={`Rename "${selectedCategory.name_en}"`}
+                    onClick={() => {
+                      setEditingCat(selectedCategory)
+                      setEditCatNameEn(selectedCategory.name_en)
+                      setDeletingCat(null)
+                      setShowNewCategory(false)
+                    }}
+                  >
+                    <Pencil className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                    <span className="hidden sm:inline">Edit</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-9 px-2.5 text-xs gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer"
+                    title={`Delete "${selectedCategory.name_en}"`}
+                    onClick={() => {
+                      setDeletingCat(selectedCategory)
+                      setEditingCat(null)
+                      setShowNewCategory(false)
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">Delete</span>
+                  </Button>
+                </div>
+              )}
+            </div>
             {errors.category_id && <p className="text-xs text-destructive">{errors.category_id.message}</p>}
           </div>
 
